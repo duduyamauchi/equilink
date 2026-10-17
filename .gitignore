@@ -1,0 +1,45 @@
+# Artefatos de build dos aplicativos Flutter.
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Android
+android/.gradle/
+android/local.properties
+android/app/.cxx/
+android/key.properties
+*.jks
+*.keystore
+
+# iOS
+ios/Flutter/ephemeral/
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# Web (o build publicável sai daqui; ver ferramentas/servir.py)
+web/.dart_tool/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs e temporários
+*.log
+*.tmp
+__pycache__/
+*.pyc
+
+# Publicação local (o script cria esta pasta com o build do Pages)
+.paginas/
+.paginas2/

@@ -1,0 +1,263 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:quarto_core/quarto_core.dart';
+
+import 'core/tema.dart';
+import 'escopo.dart';
+import 'rotas.dart';
+import 'widgets/visualizador_midia.dart';
+
+class QuartoDeMilhaApp extends StatefulWidget {
+  const QuartoDeMilhaApp({super.key, this.fonte, this.analytics});
+
+  /// Permite injetar uma fonte nos testes; em produção vem de [Ambiente].
+  final FonteDeDados? fonte;
+
+  /// Permite injetar a telemetria nos testes; em produção vem de [Ambiente].
+  final Analytics? analytics;
+
+  @override
+  State<QuartoDeMilhaApp> createState() => _QuartoDeMilhaAppState();
+}
+
+class _QuartoDeMilhaAppState extends State<QuartoDeMilhaApp> {
+  late final Repositorio _repositorio;
+  late final Analytics _analytics;
+  final _visualizador = VisualizadorController();
+  late final _roteador = criarRoteador(_registrarNavegacao);
+
+  @override
+  void initState() {
+    super.initState();
+    _analytics = widget.analytics ?? Analytics(Ambiente.criarColetor());
+    _repositorio = Repositorio(
+      widget.fonte ?? Ambiente.criarFonte(),
+      analytics: _analytics,
+    );
+    _repositorio.carregar();
+  }
+
+  /// Registra cada troca de tela. O roteador chama isto; as telas não precisam
+  /// saber que a telemetria existe.
+  void _registrarNavegacao(String rota) => _analytics.visitar(rota);
+
+  @override
+  void dispose() {
+    _visualizador.dispose();
+    _roteador.dispose();
+    _analytics.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      title: 'Quarto de Milha',
+      debugShowCheckedModeBanner: false,
+      theme: construirTema(),
+      routerConfig: _roteador,
+      locale: const Locale('pt', 'BR'),
+      supportedLocales: const [Locale('pt', 'BR'), Locale('pt')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      builder: (context, child) {
+        return RepositorioEscopo(
+          repositorio: _repositorio,
+          child: VisualizadorEscopo(
+            notifier: _visualizador,
+            child: ListenableBuilder(
+              listenable: _visualizador,
+              builder: (context, _) {
+                final midia = _visualizador.midia;
+                final aberto = midia != null;
+                return Stack(
+                  children: [
+                    // Enquanto o acervo não chega, o app mostra carregamento ou
+                    // erro em vez das telas: nenhuma tela precisa lidar com
+                    // dados ausentes.
+                    IgnorePointer(
+                      ignoring: aberto,
+                      child: ExcludeSemantics(
+                        excluding: aberto,
+                        // O portão precisa ouvir o repositório: sem isso o app
+                        // ficaria preso na tela de carregamento.
+                        child: ListenableBuilder(
+                          listenable: _repositorio,
+                          builder: (context, _) => _Portao(
+                            rep: _repositorio,
+                            child: child ?? const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (aberto)
+                      Positioned.fill(
+                        child: Overlay(
+                          initialEntries: [
+                            OverlayEntry(
+                              builder: (context) => VisualizadorMidia(
+                                midia: midia,
+                                aoFechar: _visualizador.fechar,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Exibe o conteúdo somente quando o acervo está pronto.
+class _Portao extends StatelessWidget {
+  const _Portao({required this.rep, required this.child});
+
+  final Repositorio rep;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (rep.estado) {
+      case EstadoCarga.pronto:
+        if (rep.cavalo == null) return const _AcervoVazio();
+        return child;
+      case EstadoCarga.erro:
+        return _Falha(
+          mensagem: rep.erro ?? 'Não foi possível carregar os dados.',
+          fonte: rep.fonte.descricao,
+          aoTentarNovamente: rep.carregar,
+        );
+      case EstadoCarga.inicial:
+      case EstadoCarga.carregando:
+        return const _Carregando();
+    }
+  }
+}
+
+/// Nenhum animal cadastrado ainda — orienta a cadastrar pelo painel.
+class _AcervoVazio extends StatelessWidget {
+  const _AcervoVazio();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Cores.fundo,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: const Padding(
+            padding: EdgeInsets.all(Espacos.x5),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.pets_outlined, size: 40, color: Cores.dourado),
+                SizedBox(height: Espacos.x4),
+                Text(
+                  'Nenhum animal cadastrado',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Cores.texto),
+                ),
+                SizedBox(height: Espacos.x2),
+                Text(
+                  'Use o painel administrativo para cadastrar o primeiro cavalo '
+                  'e definir qual aparece neste aplicativo.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: Cores.textoSecundario, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Carregando extends StatelessWidget {
+  const _Carregando();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: Cores.fundo,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(strokeWidth: 2.6),
+            SizedBox(height: Espacos.x4),
+            Text(
+              'Carregando o haras...',
+              style: TextStyle(fontSize: 14, color: Cores.textoSecundario),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Falha extends StatelessWidget {
+  const _Falha({required this.mensagem, required this.fonte, required this.aoTentarNovamente});
+
+  final String mensagem;
+  final String fonte;
+  final Future<void> Function() aoTentarNovamente;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Cores.fundo,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Padding(
+            padding: const EdgeInsets.all(Espacos.x5),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.cloud_off, size: 40, color: Cores.vermelho),
+                const SizedBox(height: Espacos.x4),
+                const Text(
+                  'Não foi possível carregar os dados',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Cores.texto),
+                ),
+                const SizedBox(height: Espacos.x2),
+                Text(
+                  mensagem,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Cores.textoSecundario,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: Espacos.x4),
+                Text(
+                  'Fonte: $fonte',
+                  style: const TextStyle(fontSize: 11.5, color: Cores.textoSecundario),
+                ),
+                const SizedBox(height: Espacos.x5),
+                FilledButton.icon(
+                  onPressed: () => aoTentarNovamente(),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Tentar novamente'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
