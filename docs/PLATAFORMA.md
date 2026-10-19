@@ -2,8 +2,9 @@
 
 Pergunta: onde colocar o Quarto de Milha para servir clientes reais.
 
-Resposta curta: **Cloudflare Pages (apps) + Supabase (dados, login e arquivos),
-com o Supabase em São Paulo**. Custo inicial em torno de **US$ 25/mês**.
+Resposta curta: **Cloudflare Pages (apps) + Neon em São Paulo (banco e login) +
+Cloudflare R2 (arquivos) — US$ 0 para começar.** Ao ter clientes pagantes, migre o
+banco para **Supabase Pro (US$ 25/mês)**, que traz storage nativo, backup e suporte.
 
 ---
 
@@ -174,3 +175,87 @@ do feedback:
 
 Total ~US$ 25/mês, com espaço de sobra para os primeiros clientes, e sem retrabalho:
 o contrato `FonteDeDados` já prevê a troca.
+
+---
+
+## Adendo: dá para começar com US$ 0?
+
+Sim. A recomendação de US$ 25 foi por produção, não porque não exista opção gratuita.
+Abaixo, o que cada free tier realmente entrega para **este** sistema.
+
+### Por que o free tier do Supabase não serve para clientes reais
+
+| Limite | Consequência |
+| --- | --- |
+| **Pausa após 1 semana sem uso** | o app de um cliente fica fora do ar até alguém entrar no painel e retomar à mão |
+| 500 MB de banco | suficiente para começar, apertado com fotos e eventos |
+| 1 GB de arquivos, 50 MB por arquivo | não cabe vídeo de treino |
+| 2 projetos ativos | um para produção, nenhum para homologação |
+| Sem backup | dados de cliente sem cópia |
+
+A pausa é o item decisivo: um haras pode passar dez dias sem abrir o app.
+
+### Alternativas gratuitas que funcionam de verdade
+
+| Plataforma | Free tier | Região no Brasil | Pausa |
+| --- | --- | --- | --- |
+| **Neon** (Postgres) | 1 GB/projeto, 100 CU-horas/mês, 100 projetos, 10 branches, restore de 6 h | **Sim** (`aws-sa-east-1`) — Postgres e Auth | **não pausa**: escala a zero em 5 min e acorda sozinho em ~1 s |
+| **Cloudflare R2** (arquivos) | 10 GB, 1 M escritas, 10 M leituras/mês, **egress grátis** | rede global | — |
+| **Cloudflare Pages** (apps) | builds 500/mês, **bandwidth ilimitado** | PoP em São Paulo | — |
+| Supabase Free | 500 MB, 1 GB de arquivos, 2 projetos | Sim | pausa após 7 dias |
+| Firebase Spark | Firestore 1 GiB, Auth grátis | Sim | não pausa |
+| Railway Free | apenas US$ 1/mês de uso | não escolhe região fácil | dorme |
+
+### A pilha de custo zero que eu usaria
+
+```
+Cloudflare Pages   →  os dois apps Flutter (bandwidth ilimitado)   US$ 0
+Neon (São Paulo)   →  Postgres + login                            US$ 0
+Cloudflare R2      →  fotos e vídeos (10 GB, egress grátis)       US$ 0
+──────────────────────────────────────────────────────────────────────
+                                                                  US$ 0
+```
+
+No Neon em São Paulo há **Postgres e Auth**, mas **não** há Object Storage nem
+Functions — por isso o R2 entra separado. É uma combinação melhor do que parece:
+o R2 não cobra egress, que é justamente o custo que dói com vídeo.
+
+### O que muda em relação ao Supabase
+
+| Aspecto | Supabase Pro (US$ 25) | Neon Free (US$ 0) |
+| --- | --- | --- |
+| Banco e Auth no mesmo lugar | sim | sim |
+| Storage nativo | sim (100 GB) | não (usar R2) |
+| Login pronto e maduro | Supabase Auth | Managed Better Auth (mais novo) |
+| Backup | diário, 7 dias | restore de 6 h + 1 snapshot |
+| Suporte | e-mail | comunidade |
+| Pausa por inatividade | não | não (escala a zero e volta sozinho) |
+| SLA | não (só Team) | não |
+
+### Riscos honestos do caminho gratuito
+
+- **Sem SLA e sem suporte** — se cair, você resolve sozinho.
+- **100 CU-horas/mês por projeto**: com escala a zero, uso esporádico fica muito
+  abaixo disso; um app com tráfego constante pode estourar.
+- **Cold start** de algumas centenas de milissegundos na primeira consulta após
+  ociosidade — imperceptível no app, mas existe.
+- **Free tiers mudam** sem aviso. Não construa o negócio sobre um deles sem plano B.
+- **Managed Better Auth é recente**: validar login, recuperação de senha e sessão
+  antes de abrir para clientes.
+
+### Quando migrar para pago
+
+| Gatilho | Ação |
+| --- | --- |
+| Primeiro cliente pagante | Neon Launch (uso, ~US$ 15) ou Supabase Pro |
+| Banco passando de 1 GB | idem |
+| Precisa de backup diário e suporte | Supabase Pro |
+| Vídeo passando de 10 GB no R2 | R2 é barato: US$ 0,015/GB |
+
+### Recomendação revisada
+
+**Comece em US$ 0** com Pages + Neon (São Paulo) + R2. O contrato `FonteDeDados`
+foi feito exatamente para isso: trocar de Neon para Supabase, ou de R2 para
+Storage nativo, é implementar uma classe — nenhuma tela muda.
+
+Passe para pago no primeiro cliente pagante, não antes.
