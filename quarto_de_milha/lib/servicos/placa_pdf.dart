@@ -5,7 +5,6 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../core/formatos.dart';
 import 'package:quarto_core/quarto_core.dart';
 
 /// Tamanhos disponíveis para a placa física de identificação.

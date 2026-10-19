@@ -32,6 +32,8 @@ dependencies:
     sdk: flutter
   quarto_core:
     path: ../pacotes/quarto_core
+  quarto_ui:
+    path: ../pacotes/quarto_ui
   go_router: ^18.1.0
   intl: any
 

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../core/formatos.dart';
-import '../core/tema.dart';
 import 'package:quarto_core/quarto_core.dart';
+import '../core/tema.dart';
 import '../escopo.dart';
 import '../widgets/comuns.dart';
 

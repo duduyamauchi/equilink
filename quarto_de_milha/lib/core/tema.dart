@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quarto_ui/quarto_ui.dart';
 
 /// Paleta extraída do guia visual do aplicativo (verde-petróleo, dourado e creme).
 abstract final class Cores {
@@ -188,3 +189,22 @@ ThemeData construirTema() {
     ),
   );
 }
+
+
+/// Paleta do app do usuário, no formato das primitivas compartilhadas.
+const paletaDoApp = PaletaUi(
+  superficie: Cores.superficie,
+  superficieSuave: Cores.superficieSuave,
+  borda: Cores.borda,
+  texto: Cores.texto,
+  textoSecundario: Cores.textoSecundario,
+  destaque: Cores.dourado,
+  verde: Cores.verde,
+  verdeFundo: Cores.verdeFundo,
+  ambar: Cores.ambar,
+  ambarFundo: Cores.ambarFundo,
+  vermelho: Cores.vermelho,
+  vermelhoFundo: Cores.vermelhoFundo,
+  raioMedio: Raios.medio,
+  raioPequeno: Raios.pequeno,
+);

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'core/formatos.dart';
+import 'package:quarto_core/quarto_core.dart';
 import 'core/tema.dart';
 import 'escopo.dart';
 import 'telas/baia_detalhe.dart';

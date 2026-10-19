@@ -5,6 +5,8 @@ import 'package:quarto_core/quarto_core.dart';
 import 'core/tema.dart';
 import 'escopo.dart';
 import 'rotas.dart';
+import 'package:quarto_ui/quarto_ui.dart';
+
 import 'widgets/visualizador_midia.dart';
 
 class QuartoDeMilhaApp extends StatefulWidget {
@@ -64,7 +66,9 @@ class _QuartoDeMilhaAppState extends State<QuartoDeMilhaApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
       builder: (context, child) {
-        return RepositorioEscopo(
+        return EscopoUi(
+          paleta: paletaDoApp,
+          child: RepositorioEscopo(
           repositorio: _repositorio,
           child: VisualizadorEscopo(
             notifier: _visualizador,
@@ -110,6 +114,7 @@ class _QuartoDeMilhaAppState extends State<QuartoDeMilhaApp> {
                 );
               },
             ),
+          ),
           ),
         );
       },

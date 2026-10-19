@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:quarto_ui/quarto_ui.dart';
+
 import '../core/tema.dart';
 
 /// Barra de abas em pílula, no estilo do guia visual: a aba ativa recebe
@@ -255,7 +257,7 @@ class CampoInfo extends StatelessWidget {
   }
 }
 
-/// Cartão branco padrão das listas.
+/// Cartão branco padrão das listas (estrutura compartilhada em [PainelUi]).
 class Painel extends StatelessWidget {
   const Painel({
     super.key,
@@ -269,18 +271,7 @@ class Painel extends StatelessWidget {
   final Color? cor;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: cor ?? Cores.superficie,
-        borderRadius: BorderRadius.circular(Raios.medio),
-        border: Border.all(color: Cores.borda),
-      ),
-      child: child,
-    );
-  }
+  Widget build(BuildContext context) => PainelUi(padding: padding, cor: cor, child: child);
 }
 
 /// Título de seção com ação opcional à direita.
@@ -357,7 +348,7 @@ class CabecalhoTabela extends StatelessWidget {
   }
 }
 
-/// Mensagem exibida quando uma lista está vazia.
+/// Mensagem exibida quando uma lista está vazia (estrutura em [VazioUi]).
 class Vazio extends StatelessWidget {
   const Vazio({super.key, required this.icone, required this.titulo, this.descricao});
 
@@ -366,30 +357,8 @@ class Vazio extends StatelessWidget {
   final String? descricao;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Espacos.x6, horizontal: Espacos.x4),
-      child: Column(
-        children: [
-          Icon(icone, size: 34, color: Cores.textoSecundario.withValues(alpha: 0.6)),
-          const SizedBox(height: Espacos.x3),
-          Text(
-            titulo,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Cores.texto),
-          ),
-          if (descricao != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              descricao!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12.5, color: Cores.textoSecundario, height: 1.4),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      VazioUi(icone: icone, titulo: titulo, descricao: descricao);
 }
 
 /// Barra horizontal de proporção (usada nos relatórios).

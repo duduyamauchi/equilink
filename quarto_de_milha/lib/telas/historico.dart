@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../core/formatos.dart';
-import '../core/tema.dart';
 import 'package:quarto_core/quarto_core.dart';
+import '../core/tema.dart';
 import '../escopo.dart';
 import '../widgets/comuns.dart';
 
@@ -436,7 +435,7 @@ class _Estatisticas extends StatelessWidget {
     final distribuicao = repositorio.distribuicaoColocacoes;
     final melhorMensal = mensal.isEmpty
         ? 0.0
-        : mensal.map((m) => m.melhorTempo).reduce((a, b) => a > b ? a : b);
+        : Analise.maiorValor(mensal.map((m) => m.melhorTempo));
 
     return Column(
       children: [
@@ -607,7 +606,7 @@ class _GraficoEvolucao extends StatelessWidget {
         titulo: 'Sem dados de desempenho',
       );
     }
-    final menor = dados.map((d) => d.melhorTempo).reduce((a, b) => a < b ? a : b);
+    final menor = Analise.menorValor(dados.map((d) => d.melhorTempo));
     final base = piorTempo == 0 ? 1.0 : piorTempo;
     return SizedBox(
       height: 190,

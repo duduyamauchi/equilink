@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/escopo.dart';
-import '../core/formatos.dart';
+import 'package:quarto_core/quarto_core.dart';
 import '../core/tema.dart';
 import '../rotas.dart';
 import '../widgets/comuns.dart';
@@ -17,7 +17,7 @@ class TelaPainel extends StatelessWidget {
     final consumo = rep.consumoDiario;
     final maiorConsumo = consumo.isEmpty
         ? 1.0
-        : consumo.map((c) => c.quilos).reduce((a, b) => a > b ? a : b);
+        : Analise.maiorValor(consumo.map((c) => c.quilos));
     final ocupadas = rep.baias.length;
     final semBaia = rep.cavalosSemBaia;
 

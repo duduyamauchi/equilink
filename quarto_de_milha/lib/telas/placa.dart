@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
-import '../core/formatos.dart';
-import '../core/tema.dart';
 import 'package:quarto_core/quarto_core.dart';
+import '../core/tema.dart';
 import '../escopo.dart';
 import '../servicos/compartilhar.dart';
 import '../servicos/placa_pdf.dart';

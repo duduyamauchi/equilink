@@ -1072,7 +1072,7 @@ class _GraficoBarras extends StatelessWidget {
     if (dados.isEmpty) {
       return const Vazio(icone: Icons.show_chart, titulo: 'Sem dados para exibir');
     }
-    final maior = dados.map((d) => d.valor).reduce((a, b) => a > b ? a : b);
+    final maior = Analise.maiorValor(dados.map((d) => d.valor));
     return SizedBox(
       height: 180,
       child: Row(
@@ -1133,7 +1133,7 @@ class _ListaBarras extends StatelessWidget {
     if (itens.isEmpty) {
       return const Vazio(icone: Icons.leaderboard_outlined, titulo: 'Sem dados');
     }
-    final maior = itens.map((i) => i.valor).reduce((a, b) => a > b ? a : b);
+    final maior = Analise.maiorValor(itens.map((i) => i.valor));
     return Column(
       children: [
         for (final item in itens)

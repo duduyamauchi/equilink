@@ -4,6 +4,7 @@ import 'package:quarto_core/quarto_core.dart';
 import 'core/analytics_painel.dart';
 import 'core/escopo.dart';
 import 'core/tema.dart';
+import 'package:quarto_ui/quarto_ui.dart';
 import 'rotas.dart';
 
 void main() {
@@ -64,7 +65,9 @@ class _PainelAppState extends State<PainelApp> {
       routerConfig: _roteador,
       locale: const Locale('pt', 'BR'),
       builder: (context, child) {
-        return AnalyticsPainelEscopo(
+        return EscopoUi(
+          paleta: paletaDoPainel,
+          child: AnalyticsPainelEscopo(
           notifier: _analytics,
           child: AdminEscopo(
             repositorio: _repositorio,
@@ -75,6 +78,7 @@ class _PainelAppState extends State<PainelApp> {
                 child: child ?? const SizedBox.shrink(),
               ),
             ),
+          ),
           ),
         );
       },

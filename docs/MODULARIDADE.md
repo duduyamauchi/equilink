@@ -150,3 +150,43 @@ Não é modular onde a abstração **ainda não se pagou**: UI de dois produtos 
 
 A Fase 1 é barata e eu recomendo fazer antes do backend — ela reduz a superfície que
 o backend terá de tocar.
+
+
+---
+
+## Execução da Fase 1 (concluída)
+
+| Ação | Resultado |
+| --- | --- |
+| `formatos.dart` movido para `quarto_core` | 127 linhas duplicadas removidas; 2 cópias → 1 |
+| `Analise.maiorValor` / `menorValor` / `normalizar` | 7 `reduce` espalhados em telas substituídos |
+| `MidiaPadrao.imagem` / `capaVideo` no núcleo | 6 strings mágicas de asset removidas |
+| Pacote `quarto_ui` com primitivas neutras | `Painel`, `Etiqueta`, `Vazio`, `Campo`, `Secao` compartilhados |
+| `PaletaUi` + `EscopoUi` | cada app injeta a sua paleta; identidade visual preservada |
+
+### Números
+
+| Arquivo | Antes | Depois |
+| --- | --- | --- |
+| `quarto_de_milha/lib/widgets/comuns.dart` | 569 | 538 |
+| `quarto_admin/lib/widgets/comuns.dart` | 316 | 227 |
+| `pacotes/quarto_ui/lib` | — | 338 (novo, compartilhado) |
+
+A contagem bruta não cai muito porque o código mudou de lugar — mas a **duplicação
+caiu**: `Painel`, `Etiqueta`, `Vazio` e `Campo` agora existem uma vez, e cada app
+mantém só um adaptador fino que injeta a sua paleta.
+
+### Verificação
+
+- `flutter analyze` limpo nos quatro pacotes
+- 85 testes passando (42 núcleo + 25 app + 18 painel)
+- App e painel abertos no navegador: perfil, baias com etiquetas de status e a
+  visão geral do painel renderizam **idênticos** ao estado anterior
+
+### O que ficou para depois
+
+- `SecaoUi` foi criada, mas `TituloSecao` (app) e `CabecalhoSecao` (painel) ainda
+  não a usam — têm diferenças de tipografia que merecem decisão de design.
+- `Indicador` e `FaixaErro` continuam só no painel (não há equivalente no app).
+- `BarraProporcao` e `BotaoDourado` continuam só no app.
+- Fase 2 (desacoplar do Flutter) segue parada, como planejado.

@@ -910,7 +910,7 @@ class AbaMidias extends StatelessWidget {
   Future<void> _editar(BuildContext context, Midia? midia) async {
     final rep = AdminEscopo.de(context);
     final legenda = TextEditingController(text: midia?.legenda ?? '');
-    final arquivo = TextEditingController(text: midia?.arquivo ?? 'assets/img/hero.jpg');
+    final arquivo = TextEditingController(text: midia?.arquivo ?? MidiaPadrao.imagem);
     final poster = TextEditingController(text: midia?.poster ?? '');
     final duracao = TextEditingController(text: '${midia?.duracaoSegundos ?? 10}');
     final local = TextEditingController(text: midia?.local ?? '');
