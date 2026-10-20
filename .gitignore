@@ -43,3 +43,7 @@ __pycache__/
 # Publicação local (o script cria esta pasta com o build do Pages)
 .paginas/
 .paginas2/
+
+# Guia local de ferramentas e credenciais para agentes (não versionar)
+FERRAMENTAS.local.md
+*.local.md

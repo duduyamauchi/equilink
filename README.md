@@ -17,19 +17,35 @@ português do Brasil. Três projetos, um núcleo compartilhado.
 
 ## Estado atual
 
-Os dados vêm de uma fonte em memória (`FonteMemoria`), semeada com um acervo de
-demonstração: cinco animais, baias 01 a 05, doze provas e uma galeria de fotos e
-vídeos. O painel administrativo edita esse acervo ao vivo.
+**Publicado e lendo do Postgres.** Os três componentes conversam de verdade:
 
-**Limite importante:** por ser em memória, o acervo é por sessão do navegador —
-recarregar a página restaura o estado inicial, e duas abas não compartilham dados
-entre si. Para painel e aplicativo compartilharem o mesmo acervo de verdade, é
-preciso um backend; ver [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md), que explica
-como trocar a fonte sem mexer em nenhuma tela.
+| Recurso | URL |
+| --- | --- |
+| App do usuário | https://quarto-de-milha.quarto-de-milha.workers.dev |
+| Painel administrativo | https://quarto-admin.quarto-de-milha.workers.dev |
+| API (ponte app ↔ Neon) | https://quarto-api.quarto-de-milha.workers.dev |
 
-Para apontar para um backend real, basta compilar com
-`--dart-define=QUARTO_FONTE=http --dart-define=QUARTO_API=<endereço>`. A API precisa
-responder `GET /acervo` e aceitar `PUT /acervo` no mesmo JSON que o painel exporta.
+O acervo vive num Postgres no Neon e os dois apps o consomem pela API. Sem
+argumentos de build, ambos usam a fonte em memória com o acervo de demonstração
+— útil para desenvolvimento offline e para os testes.
+
+### Por que existe uma API
+
+Flutter Web não abre conexão TCP: falar com o Postgres direto do navegador é
+impossível e exporia a credencial do banco. O Worker `quarto-api` é a ponte —
+HTTP do navegador, driver serverless para o banco. O app usa a `FonteHttp` que já
+existia; nenhuma tela precisou mudar.
+
+### Gravação por entidade
+
+O contrato `FonteDeDados` evoluiu de "salvar o acervo inteiro" para operações por
+entidade (`salvarCavalo`, `salvarBaia`, `salvarProva`, `salvarMidia`, …). Isso
+elimina o *lost update*: dois operadores editando registros diferentes não se
+sobrescrevem mais. `salvar(acervo)` continua existindo como fallback para fontes
+que não suportam escrita granular.
+
+Para apontar para um backend, compile com
+`--dart-define=QUARTO_FONTE=http --dart-define=QUARTO_API=<endereço>`.
 
 ## Analytics
 
