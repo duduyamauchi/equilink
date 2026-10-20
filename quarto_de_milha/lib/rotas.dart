@@ -4,12 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:quarto_core/quarto_core.dart';
 import 'core/tema.dart';
 import 'escopo.dart';
+import 'core/sessao_escopo.dart';
 import 'telas/baia_detalhe.dart';
 import 'telas/baias.dart';
 import 'telas/genealogia.dart';
 import 'telas/historico.dart';
 import 'telas/midias.dart';
 import 'telas/perfil.dart';
+import 'telas/acesso.dart';
 import 'telas/placa.dart';
 
 
@@ -27,6 +29,9 @@ class Rotas {
   static const midias = '/midias';
   static const baias = '/baias';
   static const placa = '/placa';
+
+  /// Acesso do proprietário (opcional: o app funciona anônimo).
+  static const acesso = '/acesso';
 
   static String baia(String numero) => '/baias/$numero';
 }
@@ -99,6 +104,11 @@ GoRouter criarRoteador([void Function(String rota)? aoNavegar]) {
         path: Rotas.placa,
         parentNavigatorKey: chaveRaiz,
         builder: (context, state) => const TelaPlaca(),
+      ),
+      GoRoute(
+        path: Rotas.acesso,
+        parentNavigatorKey: chaveRaiz,
+        builder: (context, state) => const TelaAcesso(),
       ),
     ],
   );
@@ -226,25 +236,33 @@ class _BarraLateral extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(Espacos.x5, Espacos.x6, Espacos.x4, Espacos.x5),
-              child: Column(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Espacos.x5, Espacos.x6, Espacos.x4, Espacos.x5),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'QUARTO DE MILHA',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.1,
-                      color: Colors.white,
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'QUARTO DE MILHA',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.1,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Haras Santa Helena',
+                          style: TextStyle(fontSize: 12, color: Colors.white60),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Haras Santa Helena',
-                    style: TextStyle(fontSize: 12, color: Colors.white60),
-                  ),
+                  const _BotaoAcesso(),
                 ],
               ),
             ),
@@ -358,6 +376,35 @@ class _IconeComSelo extends StatelessWidget {
         backgroundColor: Cores.dourado,
         textColor: Cores.escuro,
         child: Icon(icone, color: cor),
+      ),
+    );
+  }
+}
+
+/// Selo de acesso: mostra o usuário quando conectado, ou o convite para entrar.
+///
+/// O aplicativo é público; este é o único ponto de entrada do proprietário.
+class _BotaoAcesso extends StatelessWidget {
+  const _BotaoAcesso();
+
+  @override
+  Widget build(BuildContext context) {
+    final sessao = SessaoEscopo.de(context);
+    final conectado = sessao.autenticado;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: () => context.push(Rotas.acesso),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(
+          conectado ? Icons.verified_user : Icons.person_outline,
+          size: 20,
+          color: conectado ? Cores.verde : Colors.white54,
+          semanticLabel: conectado
+              ? 'Conectado como ${sessao.sessao!.usuario}'
+              : 'Acesso do proprietário',
+        ),
       ),
     );
   }

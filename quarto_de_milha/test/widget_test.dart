@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:quarto_de_milha/app.dart';
 import 'package:quarto_core/quarto_core.dart';
+import 'package:quarto_de_milha/telas/acesso.dart';
+import 'package:quarto_de_milha/telas/baias.dart';
+import 'package:quarto_de_milha/core/sessao_escopo.dart';
 
 void main() {
   group('formatação pt-BR', () {
@@ -254,6 +257,66 @@ void main() {
 
       await irPara(tester, 'Baias');
       expect(find.text('Gestão das Baias (Haras)'), findsOneWidget);
+    });
+  });
+
+  group('acesso do proprietário', () {
+    testWidgets('visitante vê o aviso de manejo privado e é levado ao login', (tester) async {
+      // Fonte em memória: sem backend não haveria aviso nem login, então o
+      // cenário usa uma sessão explícita de visitante com backend disponível.
+      final sessaoApi = SessaoApi(base: 'https://exemplo.invalid');
+      await tester.pumpWidget(
+        SessaoEscopo(
+          sessao: null,
+          sessaoApi: sessaoApi,
+          entrar: (_) {},
+          sair: () async {},
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: Column(
+                  children: [
+                    const AvisoManejoPrivado(),
+                    Builder(
+                      builder: (context) => TextButton(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const TelaAcesso()),
+                        ),
+                        child: const Text('abrir acesso'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('O manejo das baias é privado'), findsOneWidget);
+
+      await tester.tap(find.text('abrir acesso'));
+      await tester.pumpAndSettle();
+      expect(find.text('Acesso do proprietário'), findsOneWidget);
+      expect(find.text('Entrar'), findsOneWidget);
+      expect(find.text('Continuar sem entrar'), findsOneWidget);
+    });
+
+    testWidgets('quem já entrou não vê o aviso de privacidade', (tester) async {
+      final sessaoApi = SessaoApi(base: 'https://exemplo.invalid');
+      await tester.pumpWidget(
+        SessaoEscopo(
+          sessao: const Sessao(usuario: 'eduardo', harasId: 'h1', papel: 'proprietario'),
+          sessaoApi: sessaoApi,
+          entrar: (_) {},
+          sair: () async {},
+          child: const MaterialApp(home: Scaffold(body: AvisoManejoPrivado())),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('O manejo das baias é privado'), findsNothing);
     });
   });
 }
