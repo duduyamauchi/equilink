@@ -34,6 +34,10 @@ web/.dart_tool/
 Thumbs.db
 desktop.ini
 
+# Dependências Node (o Worker tem package.json próprio)
+node_modules/
+.wrangler/
+
 # Logs e temporários
 *.log
 *.tmp
