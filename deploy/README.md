@@ -7,9 +7,11 @@
 | Cloudflare Workers (Pages) | app do usuário | https://quarto-de-milha.quarto-de-milha.workers.dev |
 | Cloudflare Workers (Pages) | painel administrativo | https://quarto-admin.quarto-de-milha.workers.dev |
 | Neon `aws-sa-east-1` | banco `quarto-de-milha` | projeto `fragrant-field-06733330` |
+| Cloudflare R2 | bucket `quarto-midia` | https://pub-8df2b57f664a42c0ad09120d9bf49cef.r2.dev |
 
 Ambos servem o build estático com dados de demonstração (`FonteMemoria`).
-O banco está criado, mas **o app ainda não o consome** — falta a `FonteNeon`.
+O banco está criado e o schema aplicado (10 tabelas, validado com dados reais),
+mas **o app ainda não o consome** — falta a `FonteNeon`.
 
 ## Publicar novamente
 
@@ -42,5 +44,5 @@ A connection string está em `~/.segredos/neon_projeto.json`.
 2. Gravação por entidade (o contrato atual salva o acervo inteiro)
 3. Login do proprietário e manejo privado
 4. Mídia por URL (hoje `Image.asset`)
-5. Ativar R2 no painel da Cloudflare (a API recusa até lá)
+5. ~~Ativar R2~~ — feito; bucket `quarto-midia` com domínio público ativo
 6. Domínio próprio
