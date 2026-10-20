@@ -51,3 +51,6 @@ __pycache__/
 # Guia local de ferramentas e credenciais para agentes (não versionar)
 FERRAMENTAS.local.md
 *.local.md
+
+# Repositorio separado (privado) com segredos: nunca versionar aqui.
+infra/
