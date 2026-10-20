@@ -74,6 +74,16 @@ class ErroFonte implements Exception {
   String toString() => mensagem;
 }
 
+/// A API exige sessão: a interface deve pedir login.
+class ErroAutenticacao extends ErroFonte {
+  const ErroAutenticacao(super.mensagem, {super.status = 401, super.causa});
+}
+
+/// A sessão existe, mas o papel do usuário não permite a operação.
+class ErroPermissao extends ErroFonte {
+  const ErroPermissao(super.mensagem, {super.status = 403, super.causa});
+}
+
 /// Contrato de qualquer origem de dados do aplicativo.
 ///
 /// Implementações previstas:

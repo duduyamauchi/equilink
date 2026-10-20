@@ -25,9 +25,30 @@ português do Brasil. Três projetos, um núcleo compartilhado.
 | Painel administrativo | https://quarto-admin.quarto-de-milha.workers.dev |
 | API (ponte app ↔ Neon) | https://quarto-api.quarto-de-milha.workers.dev |
 
-O acervo vive num Postgres no Neon e os dois apps o consomem pela API. Sem
-argumentos de build, ambos usam a fonte em memória com o acervo de demonstração
-— útil para desenvolvimento offline e para os testes.
+O acervo vive num Postgres no Neon e os dois apps o consomem pela API, sempre
+pelo proxy `/api` do próprio host. Sem argumentos de build, ambos usam a fonte
+em memória com o acervo de demonstração — útil para desenvolvimento offline e
+para os testes.
+
+**Escrita exige login.** O visitante vê a vitrine (fotos, genealogia, histórico);
+telefone do proprietário e manejo das baias só aparecem para quem entrou. O
+painel abre numa tela de login e não serve nada antes dela.
+
+### Segurança
+
+| Item | Como está |
+| --- | --- |
+| Senha | PBKDF2 100k + pepper do servidor (dump do banco sozinho não basta) |
+| Sessão | cookie `HttpOnly` + `Secure` + `SameSite=Strict` assinado, 8 h |
+| Autorização | `leitor` lê, `operador` escreve, `proprietario` remove |
+| Força bruta | 5 tentativas por IP/usuário em 15 min |
+| Entrada | limite de corpo, validação de tipo/intervalo/data, URL só http(s) |
+| Erro | nunca vaza mensagem do banco; log com id de correlação |
+| Cabeçalhos | HSTS, CSP, `X-Frame-Options`, `nosniff`, `Referrer-Policy` |
+| CORS | allowlist exata, sem `*` |
+
+Detalhes e o porquê de cada escolha em
+[`docs/ARQUITETURA.md`](docs/ARQUITETURA.md#segurança).
 
 ### Por que existe uma API
 
