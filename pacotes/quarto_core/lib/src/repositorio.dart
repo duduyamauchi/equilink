@@ -92,6 +92,11 @@ class Repositorio extends ChangeNotifier {
   ///
   /// [evento] descreve o que aconteceu: é registrado somente quando a gravação
   /// é bem-sucedida, para a telemetria refletir o estado real.
+  /// Aplica uma transformação local e persiste.
+  ///
+  /// [gravar] recebe o acervo já transformado e executa apenas a escrita da
+  /// entidade afetada. Quando ausente, cai em `fonte.salvar(acervo)` — o que
+  /// só é seguro para substituição total.
   Future<bool> _aplicar(
     Acervo Function(Acervo) transformacao, {
     String? evento,
@@ -99,6 +104,7 @@ class Repositorio extends ChangeNotifier {
     num? valor,
     String? entidade,
     String? entidadeId,
+    Future<void> Function(Acervo acervo)? gravar,
   }) async {
     if (!permiteEscrita) {
       _erro = 'A fonte de dados atual é somente leitura.';
@@ -110,7 +116,11 @@ class Repositorio extends ChangeNotifier {
     _erro = null;
     notifyListeners();
     try {
-      _acervo = await fonte.salvar(_acervo);
+      if (gravar != null) {
+        await gravar(_acervo);
+      } else {
+        _acervo = await fonte.salvar(_acervo);
+      }
       if (evento != null) {
         analytics.registrar(
           evento,
@@ -280,6 +290,7 @@ class Repositorio extends ChangeNotifier {
       evento: existe ? 'cavalo_editado' : 'cavalo_criado',
       entidade: 'cavalo',
       entidadeId: cavalo.id,
+      gravar: (_) => fonte.salvarCavalo(cavalo),
       propriedades: {'registro': cavalo.registro, 'provas': cavalo.provas.length},
     );
   }
@@ -293,6 +304,7 @@ class Repositorio extends ChangeNotifier {
     evento: 'cavalo_removido',
     entidade: 'cavalo',
     entidadeId: id,
+    gravar: (_) => fonte.removerCavalo(id),
   );
 
   /// Define qual cavalo aparece no aplicativo do usuário.
@@ -303,6 +315,7 @@ class Repositorio extends ChangeNotifier {
     evento: 'cavalo_destacado',
     entidade: 'cavalo',
     entidadeId: id,
+    gravar: (_) => fonte.definirPrincipal(id),
   );
 
   Future<bool> atualizarDescricao(String id, String texto) => _aplicar(
@@ -342,6 +355,7 @@ class Repositorio extends ChangeNotifier {
       evento: existe ? 'prova_editada' : 'prova_registrada',
       entidade: 'prova',
       entidadeId: prova.id,
+      gravar: (_) => fonte.salvarProva(cavaloId, prova),
       valor: prova.tempoSegundos,
       propriedades: {
         'cavaloId': cavaloId,
@@ -392,6 +406,7 @@ class Repositorio extends ChangeNotifier {
       evento: existe ? 'midia_editada' : 'midia_adicionada',
       entidade: 'midia',
       entidadeId: midia.id,
+      gravar: (_) => fonte.salvarMidia(cavaloId, midia),
       propriedades: {'cavaloId': cavaloId, 'tipo': midia.tipo.name},
     );
   }
@@ -446,6 +461,10 @@ class Repositorio extends ChangeNotifier {
       evento: 'baia_criada',
       entidade: 'baia',
       entidadeId: proximo,
+      gravar: (a) {
+        final nova = a.baia(proximo);
+        return nova == null ? Future<void>.value() : fonte.salvarBaia(nova);
+      },
       propriedades: {
         'cavaloId': cavaloId,
         'status': status.name,
@@ -496,6 +515,7 @@ class Repositorio extends ChangeNotifier {
     evento: 'baia_removida',
     entidade: 'baia',
     entidadeId: numero,
+    gravar: (_) => fonte.removerBaia(numero),
   );
 
   Future<bool> atualizarBaia(Baia baia, {String? evento}) => _atualizarBaia(
@@ -726,5 +746,9 @@ class Repositorio extends ChangeNotifier {
     entidade: entidade,
     entidadeId: entidadeId,
     propriedades: propriedades,
+    gravar: (a) {
+      final atualizada = a.baia(numero);
+      return atualizada == null ? Future<void>.value() : fonte.salvarBaia(atualizada);
+    },
   );
 }

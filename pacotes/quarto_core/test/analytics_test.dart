@@ -374,8 +374,14 @@ void main() {
 }
 
 /// Fonte que lê normalmente mas recusa toda gravação.
-class _FonteQueRecusa implements FonteDeDados {
+class _FonteQueRecusa with GravacaoGranular implements FonteDeDados {
   final _acervo = FonteMemoria.acervoDeDemonstracao();
+
+  @override
+  Acervo get acervoAtual => _acervo;
+
+  @override
+  set acervoAtual(Acervo valor) {}
 
   @override
   String get descricao => 'recusa gravação';
