@@ -262,9 +262,11 @@ class _AbaBaias extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${repositorio.registroCavalo(baia.cavaloId)} • '
-                            '${repositorio.pelagemCavalo(baia.cavaloId)} • '
-                            'Limpeza ${dataCurta(baia.ultimaLimpeza)}',
+                            repositorio.baiaOrfa(baia.cavaloId)
+                                ? 'Baia vazia • Limpeza ${dataCurta(baia.ultimaLimpeza)}'
+                                : '${repositorio.registroCavalo(baia.cavaloId)} • '
+                                  '${repositorio.pelagemCavalo(baia.cavaloId)} • '
+                                  'Limpeza ${dataCurta(baia.ultimaLimpeza)}',
                             style: const TextStyle(
                               fontSize: 11.5,
                               color: Cores.textoSecundario,

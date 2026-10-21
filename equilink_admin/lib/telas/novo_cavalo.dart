@@ -732,20 +732,26 @@ class _BarraAcoes extends StatelessWidget {
           ),
           const Spacer(),
           if (passo > 0)
-            OutlinedButton(
+            OutlinedButton.icon(
               onPressed: salvando ? null : aoVoltar,
-              child: const Text('Voltar'),
+              icon: const Icon(Icons.arrow_back, size: 16),
+              label: const Text('Voltar'),
             ),
           const SizedBox(width: 8),
-          FilledButton(
-            onPressed: salvando ? null : (ultimo ? aoSalvar : aoAvancar),
-            child: salvando
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(ultimo ? 'Concluir cadastro' : 'Continuar'),
+          // Largura fixa: o texto muda entre "Continuar" e "Concluir cadastro",
+          // e o botão dançava de posição entre os passos.
+          SizedBox(
+            width: ultimo ? 180 : 128,
+            child: FilledButton(
+              onPressed: salvando ? null : (ultimo ? aoSalvar : aoAvancar),
+              child: salvando
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(ultimo ? 'Concluir cadastro' : 'Continuar'),
+            ),
           ),
         ],
       ),

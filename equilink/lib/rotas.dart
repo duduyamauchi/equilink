@@ -33,6 +33,9 @@ class Rotas {
   /// Acesso do proprietário (opcional: o app funciona anônimo).
   static const acesso = '/acesso';
 
+  /// Perfil de um animal específico, alvo do QR Code da placa.
+  static String cavaloPorRegistro(String registro) => '/cavalo/$registro';
+
   static String baia(String numero) => '/baias/$numero';
 }
 
@@ -109,6 +112,18 @@ GoRouter criarRoteador([void Function(String rota)? aoNavegar]) {
         path: Rotas.acesso,
         parentNavigatorKey: chaveRaiz,
         builder: (context, state) => const TelaAcesso(),
+      ),
+      // Alvo do QR Code da placa: /cavalo/<registro>. Redireciona para o
+      // perfil, que passa a exibir o animal pedido em vez do destaque do haras.
+      GoRoute(
+        path: '/cavalo/:registro',
+        parentNavigatorKey: chaveRaiz,
+        redirect: (context, state) {
+          final registro = state.pathParameters['registro'] ?? '';
+          final rep = RepositorioEscopo.de(context);
+          rep.focarRegistro(registro);
+          return Rotas.perfil;
+        },
       ),
     ],
   );

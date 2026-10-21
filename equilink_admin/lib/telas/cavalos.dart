@@ -93,6 +93,34 @@ class _CartaoCavalo extends StatelessWidget {
 
   final Cavalo cavalo;
 
+  /// Copia o animal com um registro novo.
+  ///
+  /// O registro ABQM é único por haras no banco, e a cópia antiga mantinha o
+  /// mesmo. A gravação falhava e o erro não aparecia: a cópia surgia na lista
+  /// otimista e sumia no próximo carregamento. Agora o registro recebe sufixo
+  /// e o operador é avisado se ainda assim falhar.
+  Future<void> _duplicar(BuildContext context, Repositorio rep, Cavalo cavalo) async {
+    final copia = cavalo.copiarCom(
+      id: rep.novoId('copia'),
+      nome: '${cavalo.nome} (CÓPIA)',
+      registro: '${cavalo.registro}-COPIA',
+      principal: false,
+      provas: const [],
+      midias: const [],
+    );
+    final ok = await rep.salvarCavalo(copia);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Cópia de ${cavalo.nome} criada com o registro ${copia.registro}.'
+              : rep.erro ?? 'Não foi possível duplicar ${cavalo.nome}.',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final rep = AdminEscopo.de(context);
@@ -188,18 +216,7 @@ class _CartaoCavalo extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'Duplicar',
-            onPressed: () async {
-              final copia = cavalo.copiarCom(
-                id: rep.novoId('copia'),
-                nome: '${cavalo.nome} (CÓPIA)',
-                principal: false,
-              );
-              await rep.salvarCavalo(copia);
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Cópia de ${cavalo.nome} criada.')),
-              );
-            },
+            onPressed: () => _duplicar(context, rep, cavalo),
             icon: const Icon(Icons.copy_outlined, size: 19),
           ),
           IconButton(

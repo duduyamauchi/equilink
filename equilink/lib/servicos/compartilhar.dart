@@ -27,7 +27,11 @@ class ContextoPerfil {
 
   final Cavalo cavalo;
 
-  String get urlPublica => '${Ambiente.sitePublico}/cavalo/${cavalo.registro.toLowerCase()}';
+  /// Link público do animal, usado no QR da placa e ao compartilhar.
+  ///
+  /// O registro vai em maiúsculas por ser o identificador que o haras usa; a
+  /// rota `/cavalo/:registro` procura sem diferenciar caixa.
+  String get urlPublica => '${Ambiente.sitePublico}/cavalo/${cavalo.registro}';
 }
 
 abstract final class CompartilhamentoPerfil {

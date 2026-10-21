@@ -33,6 +33,52 @@ class _TelaPerfilState extends State<TelaPerfil> {
   Widget build(BuildContext context) {
     final repositorio = RepositorioEscopo.de(context);
     final visualizador = VisualizadorEscopo.de(context);
+    // Registro da URL que não existe: explica em vez de mostrar outro animal.
+    final erroFoco = repositorio.erroFoco;
+    if (erroFoco != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Detalhes do Cavalo')),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Padding(
+              padding: const EdgeInsets.all(Espacos.x5),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.search_off, size: 38, color: Cores.dourado),
+                  const SizedBox(height: Espacos.x4),
+                  Text(
+                    erroFoco,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Cores.texto,
+                    ),
+                  ),
+                  const SizedBox(height: Espacos.x2),
+                  const Text(
+                    'Confira o registro na placa ou abra o perfil do destaque do haras.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12.5, color: Cores.textoSecundario, height: 1.5),
+                  ),
+                  const SizedBox(height: Espacos.x4),
+                  FilledButton(
+                    onPressed: () {
+                      repositorio.limparFoco();
+                      context.go(Rotas.perfil);
+                    },
+                    child: const Text('Ver o destaque do haras'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final cavalo = repositorio.cavaloObrigatorio;
     final fotos = cavalo.fotos;
     final videos = cavalo.videos;
@@ -370,6 +416,32 @@ class _Carrossel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Sem fotos, o carrossel vazio ocupava 214 px e mostrava "1/0" — o perfil
+    // abria com um buraco no topo e um contador sem sentido.
+    if (fotos.isEmpty) {
+      return Container(
+        height: 132,
+        color: Cores.trilho,
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.photo_library_outlined, size: 26, color: Cores.textoSecundario),
+            const SizedBox(height: Espacos.x2),
+            Text(
+              'Sem fotos cadastradas',
+              style: TextStyle(fontSize: 12.5, color: Cores.textoSecundario),
+            ),
+            const SizedBox(height: Espacos.x1),
+            Text(
+              'Use a foto de perfil abaixo para identificar o animal.',
+              style: TextStyle(fontSize: 11, color: Cores.textoSecundario),
+            ),
+          ],
+        ),
+      );
+    }
+
     return SizedBox(
       height: 214,
       child: Stack(

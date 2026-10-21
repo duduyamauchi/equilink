@@ -31,6 +31,13 @@ class Repositorio extends ChangeNotifier {
   String? _erro;
   int _sequencia = 0;
 
+  /// Cavalo escolhido por link direto (`/cavalo/:registro`), quando houver.
+  ///
+  /// O QR Code da placa aponta para o perfil de um animal específico; sem isto o
+  /// app sempre abria o destaque do haras e o link levava ao cavalo errado.
+  String? _idEmFoco;
+  String? _erroFoco;
+
   /// Data de referência dos cálculos de idade (mantém os testes determinísticos).
   final DateTime hoje = DateTime(2026, 10, 14);
 
@@ -49,7 +56,53 @@ class Repositorio extends ChangeNotifier {
   List<Baia> get baias => _acervo.baias;
 
   /// Cavalo exibido no aplicativo do usuário.
-  Cavalo? get cavalo => _acervo.principal;
+  ///
+  /// Prioriza o animal escolhido por link direto; sem link, o destaque do haras.
+  Cavalo? get cavalo {
+    final foco = _idEmFoco;
+    if (foco != null) {
+      final alvo = _acervo.cavaloPorId(foco);
+      if (alvo != null) return alvo;
+    }
+    return _acervo.principal;
+  }
+
+  /// Registro pedido pela URL atual, se houver.
+  String? get registroEmFoco {
+    final foco = _idEmFoco;
+    return foco == null ? null : _acervo.cavaloPorId(foco)?.registro;
+  }
+
+  /// Mensagem quando o registro da URL não existe no acervo.
+  String? get erroFoco => _erroFoco;
+
+  /// Aponta o aplicativo para o animal de um link (`/cavalo/:registro`).
+  ///
+  /// Devolve `false` quando não há animal com aquele registro; a tela mostra o
+  /// motivo em vez de exibir silenciosamente outro cavalo.
+  bool focarRegistro(String registro) {
+    final alvo = _acervo.cavalos
+        .where((c) => c.registro.toLowerCase() == registro.trim().toLowerCase())
+        .firstOrNull;
+    if (alvo == null) {
+      _idEmFoco = null;
+      _erroFoco = 'Nenhum animal cadastrado com o registro "$registro".';
+      notifyListeners();
+      return false;
+    }
+    _idEmFoco = alvo.id;
+    _erroFoco = null;
+    notifyListeners();
+    return true;
+  }
+
+  /// Volta a exibir o destaque do haras.
+  void limparFoco() {
+    if (_idEmFoco == null && _erroFoco == null) return;
+    _idEmFoco = null;
+    _erroFoco = null;
+    notifyListeners();
+  }
 
   /// Lança se o acervo ainda não foi carregado — usado só onde o dado é
   /// obrigatório (telas do usuário, que só montam após o carregamento).
@@ -171,7 +224,16 @@ class Repositorio extends ChangeNotifier {
 
   Cavalo? cavaloPorId(String id) => _acervo.cavaloPorId(id);
 
-  String nomeCavalo(String id) => cavaloPorId(id)?.nome ?? 'Sem identificação';
+  String nomeCavalo(String id) =>
+      cavaloPorId(id)?.nome ?? 'Baia livre';
+
+  /// Baia cujo animal saiu do acervo (cavalo removido, baia esquecida).
+  ///
+  /// Antes o app mostrava o cavalo como "Sem identificação" e o painel contava
+  /// a baia como ocupada — o operador via 5 baias ocupadas com 5 animais, mas
+  /// uma delas não tinha ninguém.
+  bool baiaOrfa(String? cavaloId) =>
+      cavaloId == null || cavaloId.isEmpty || cavaloPorId(cavaloId) == null;
 
   /// Registro ABQM do animal, com traço quando não cadastrado.
   String registroCavalo(String id) => cavaloPorId(id)?.registro ?? '—';

@@ -207,7 +207,10 @@ void main() {
 
       expect(find.text('Placa de identificação'), findsOneWidget);
       expect(find.byType(QrImageView), findsOneWidget);
-      expect(find.textContaining('equilink.app.br/cavalo/p341234'), findsWidgets);
+      expect(
+        find.textContaining('equilink.quarto-de-milha.workers.dev/cavalo/P341234'),
+        findsWidgets,
+      );
     });
 
     testWidgets('abre os detalhes da baia com a rotina de manejo', (tester) async {
@@ -317,6 +320,43 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('O manejo das baias é privado'), findsNothing);
+    });
+  });
+
+  group('regressões do e2e', () {
+    test('link por registro foca o animal pedido e avisa quando não existe', () async {
+      final rep = Repositorio(FonteMemoria());
+      await rep.carregar();
+
+      // Sem foco, o app mostra o destaque do haras.
+      final destaque = rep.cavalo!.registro;
+      expect(rep.erroFoco, isNull);
+
+      // Um registro existente passa a ser o exibido.
+      final outro = rep.cavalos.firstWhere((c) => c.registro != destaque);
+      expect(rep.focarRegistro(outro.registro.toLowerCase()), isTrue);
+      expect(rep.cavalo!.id, outro.id);
+      expect(rep.erroFoco, isNull);
+
+      // Registro inexistente explica em vez de mostrar outro animal.
+      expect(rep.focarRegistro('NAO-EXISTE'), isFalse);
+      expect(rep.erroFoco, contains('NAO-EXISTE'));
+
+      // Limpar volta ao destaque.
+      rep.limparFoco();
+      expect(rep.erroFoco, isNull);
+      expect(rep.cavalo!.registro, destaque);
+    });
+
+    test('baia sem animal é reconhecida como vazia', () async {
+      final rep = Repositorio(FonteMemoria());
+      await rep.carregar();
+
+      expect(rep.baiaOrfa(null), isTrue);
+      expect(rep.baiaOrfa(''), isTrue);
+      expect(rep.baiaOrfa('cavalo-que-nao-existe'), isTrue);
+      final existente = rep.cavalos.first.id;
+      expect(rep.baiaOrfa(existente), isFalse);
     });
   });
 }

@@ -32,7 +32,9 @@ void main() {
       final cavalo = FonteMemoria.acervoDeDemonstracao().principal!;
       final perfil = ContextoPerfil(cavalo: cavalo);
 
-      expect(perfil.urlPublica, 'https://equilink.app.br/cavalo/p341234');
+      // O QR precisa apontar para o host que de fato serve o app, e na rota que
+      // o aplicativo sabe resolver (/cavalo/:registro).
+      expect(perfil.urlPublica, 'https://equilink.quarto-de-milha.workers.dev/cavalo/P341234');
 
       final texto = IdentidadeCavalo.texto(cavalo);
       expect(texto, contains('ISABEL TORO LEO'));

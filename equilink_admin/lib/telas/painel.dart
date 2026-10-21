@@ -18,7 +18,7 @@ class TelaPainel extends StatelessWidget {
     final maiorConsumo = consumo.isEmpty
         ? 1.0
         : Analise.maiorValor(consumo.map((c) => c.quilos));
-    final ocupadas = rep.baias.length;
+    final ocupadas = rep.baias.where((b) => !rep.baiaOrfa(b.cavaloId)).length;
     final semBaia = rep.cavalosSemBaia;
 
     return ListView(

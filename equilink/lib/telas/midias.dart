@@ -69,6 +69,34 @@ class _TelaMidiasState extends State<TelaMidias> {
           ),
           const SizedBox(height: Espacos.x4),
           // Mídia em destaque com contador "1/12".
+          //
+          // Sem nenhuma mídia da aba atual, o carrossel vazio mostrava "0/0" e
+          // ocupava 210 px com nada dentro.
+          if (destaque.isEmpty)
+            Container(
+              height: 120,
+              decoration: BoxDecoration(
+                color: Cores.trilho,
+                borderRadius: BorderRadius.circular(Raios.medio),
+              ),
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _aba == 0 ? Icons.photo_outlined : Icons.videocam_outlined,
+                    size: 24,
+                    color: Cores.textoSecundario,
+                  ),
+                  const SizedBox(height: Espacos.x2),
+                  Text(
+                    _aba == 0 ? 'Nenhuma foto cadastrada' : 'Nenhum vídeo cadastrado',
+                    style: const TextStyle(fontSize: 12.5, color: Cores.textoSecundario),
+                  ),
+                ],
+              ),
+            ),
+          if (destaque.isNotEmpty)
           ClipRRect(
             borderRadius: BorderRadius.circular(Raios.medio),
             child: SizedBox(

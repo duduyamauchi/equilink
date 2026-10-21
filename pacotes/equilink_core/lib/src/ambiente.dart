@@ -29,9 +29,12 @@ abstract final class Ambiente {
   static const token = String.fromEnvironment('EQUILINK_TOKEN', defaultValue: '');
 
   /// Endereço público exibido no QR Code da placa de identificação.
+  ///
+  /// O padrão é o host que de fato serve o aplicativo. Um domínio próprio entra
+  /// por `--dart-define=EQUILINK_SITE=https://seu-dominio`.
   static const sitePublico = String.fromEnvironment(
     'EQUILINK_SITE',
-    defaultValue: 'https://equilink.app.br',
+    defaultValue: 'https://equilink.quarto-de-milha.workers.dev',
   );
 
   /// Destino dos eventos analíticos: `memoria` (padrão), `http`, `console`, `nulo`.
