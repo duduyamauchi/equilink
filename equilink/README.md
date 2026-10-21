@@ -6,16 +6,19 @@ código-fonte.
 
 ## Versão publicada
 
-**https://duduyamauchi.github.io/equilink/**
+**https://equilink.quarto-de-milha.workers.dev**
 
-Hospedado no GitHub Pages (ramificação `gh-pages` do repositório
-[`duduyamauchi/equilink`](https://github.com/duduyamauchi/equilink)).
-Basta abrir o endereço no navegador — celular ou computador — sem instalar nada.
+Servido por um Cloudflare Worker que hospeda o build e encaminha `/api/*` para a
+API. O sufixo `quarto-de-milha` é o subdomínio da conta Cloudflare, que a API
+recusa alterar.
 
-Para republicar após uma alteração, o build precisa do caminho base do Pages:
+Para republicar após uma alteração:
 
 ```bash
-flutter build web --release --base-href=/equilink/
+flutter build web --release --base-href=/ --no-web-resources-cdn \
+  --dart-define=EQUILINK_FONTE=http \
+  --dart-define=EQUILINK_API=/api
+npx -y wrangler@latest deploy
 ```
 
 Sem `--base-href`, os arquivos são procurados na raiz do domínio

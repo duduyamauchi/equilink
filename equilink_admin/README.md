@@ -1,17 +1,33 @@
-# equilink_admin
+# EquiLink — painel administrativo
 
-A new Flutter project.
+Painel web do EquiLink: CRUD do acervo, baias, provas, analytics e inspeção da
+fonte de dados. Compartilha o núcleo (`equilink_core`) e as primitivas visuais
+(`equilink_ui`) com o aplicativo do usuário.
 
-## Getting Started
+## Versão publicada
 
-This project is a starting point for a Flutter application.
+**https://equilink-admin.quarto-de-milha.workers.dev**
 
-A few resources to get you started if this is your first Flutter project:
+O acesso exige login. O Worker serve o build e encaminha `/api/*` para a API;
+é esse proxy de mesma origem que faz o cookie de sessão `SameSite=Strict`
+funcionar.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Rodar localmente
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter run -d chrome
+```
+
+Sem argumentos de build o painel usa a fonte em memória (acervo de
+demonstração), sem login.
+
+## Publicar
+
+```bash
+flutter build web --release --base-href=/ --no-web-resources-cdn \
+  --dart-define=EQUILINK_FONTE=http \
+  --dart-define=EQUILINK_API=/api
+npx -y wrangler@latest deploy
+```
+
+`--no-web-resources-cdn` mantém o Canvaskit local, exigência do CSP.
