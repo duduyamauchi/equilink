@@ -16,7 +16,7 @@ Tabelas em `deploy/migracao_sugestoes.sql`.
 | Campo | Para que serve a quem implementa |
 | --- | --- |
 | `rota` | página exata (`/cavalos`, `/provas`, `/cavalos/novo`) |
-| `referencia` | dica opcional: `arquivo.dart#Símbolo` |
+| `referencia` | **preenchida pelo painel**, não pelo cliente: `arquivo.dart#Símbolo` derivado da rota em `PaginaDoPainel` |
 | `titulo` | resumo de uma linha |
 | `texto` | o pedido completo, nas palavras do cliente |
 | `status` | `aberta` → `em_andamento` → `implementada` / `recusada` |
@@ -44,6 +44,11 @@ cliente vê no botão de histórico.
 Todas exigem sessão. Cada usuário vê apenas as próprias sugestões.
 
 ## Implementando uma sugestão
+
+O cliente nunca digita caminho de arquivo. O painel resolve a página
+(`equilink_admin/lib/core/paginas.dart`) e grava `referencia` já apontando para
+o arquivo e o widget. Página nova no painel precisa de entrada nesse mapa; sem
+ela, a referência cai em `rotas.dart`.
 
 1. Ler a fila aberta:
 

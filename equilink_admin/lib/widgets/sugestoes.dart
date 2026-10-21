@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:equilink_core/equilink_core.dart';
 
+import '../core/paginas.dart';
 import '../core/tema.dart';
 
 /// Sugestões do cliente sobre a página aberta.
@@ -24,7 +25,6 @@ class PainelSugestoes extends StatefulWidget {
 class _PainelSugestoesState extends State<PainelSugestoes> {
   final _titulo = TextEditingController();
   final _texto = TextEditingController();
-  final _referencia = TextEditingController();
 
   List<Sugestao> _sugestoes = const [];
   bool _carregando = false;
@@ -57,7 +57,6 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
   void dispose() {
     _titulo.dispose();
     _texto.dispose();
-    _referencia.dispose();
     super.dispose();
   }
 
@@ -87,6 +86,9 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
   Future<void> _salvar() async {
     final api = _api;
     if (api == null || _enviando) return;
+    // A referência ao código é derivada da página: o cliente não digita caminho
+    // de arquivo, e quem implementa recebe a dica completa.
+    final pagina = PaginaDoPainel.de(widget.rota);
     final titulo = _titulo.text.trim();
     final texto = _texto.text.trim();
     if (titulo.isEmpty || texto.isEmpty) {
@@ -104,14 +106,14 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
           rota: widget.rota,
           titulo: titulo,
           texto: texto,
-          referencia: _referencia.text.trim(),
+          referencia: pagina.referencia,
         );
       } else {
         await api.editar(
           _editandoId!,
           titulo: titulo,
           texto: texto,
-          referencia: _referencia.text.trim(),
+          referencia: pagina.referencia,
         );
       }
       _limparFormulario();
@@ -131,7 +133,6 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
   void _limparFormulario() {
     _titulo.clear();
     _texto.clear();
-    _referencia.clear();
     setState(() {
       _editandoId = null;
       _historicoId = null;
@@ -145,7 +146,6 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
       _historicoId = null;
       _titulo.text = s.titulo;
       _texto.text = s.texto;
-      _referencia.text = s.referencia ?? '';
     });
   }
 
@@ -200,6 +200,7 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
   @override
   Widget build(BuildContext context) {
     final api = _api;
+    final pagina = PaginaDoPainel.de(widget.rota);
 
     return Material(
       color: AdminCores.superficie,
@@ -259,12 +260,11 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   children: [
-                    _RotaAtual(rota: widget.rota),
+                    _PaginaAtual(pagina: pagina),
                     const SizedBox(height: 12),
                     _Formulario(
                       titulo: _titulo,
                       texto: _texto,
-                      referencia: _referencia,
                       editando: _editandoId != null,
                       enviando: _enviando,
                       aoSalvar: _salvar,
@@ -341,36 +341,32 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
   }
 }
 
-class _RotaAtual extends StatelessWidget {
-  const _RotaAtual({required this.rota});
+/// Identifica a página atual pelo nome que o cliente conhece.
+///
+/// Antes mostrava a rota crua (`/cavalos/novo`) num contêiner com cara de campo
+/// de texto — parecia editável e não fazia nada.
+class _PaginaAtual extends StatelessWidget {
+  const _PaginaAtual({required this.pagina});
 
-  final String rota;
+  final PaginaDoPainel pagina;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: AdminCores.superficieSuave,
-        borderRadius: BorderRadius.circular(AdminRaios.pequeno),
-        border: Border.all(color: AdminCores.borda),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.link, size: 13, color: AdminCores.textoSecundario),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              rota,
-              style: const TextStyle(
-                fontSize: 11.5,
-                fontFamily: 'monospace',
-                color: AdminCores.texto,
-              ),
+    return Row(
+      children: [
+        const Icon(Icons.place_outlined, size: 14, color: AdminCores.dourado),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            pagina.rotulo,
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: AdminCores.texto,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -379,7 +375,6 @@ class _Formulario extends StatelessWidget {
   const _Formulario({
     required this.titulo,
     required this.texto,
-    required this.referencia,
     required this.editando,
     required this.enviando,
     required this.aoSalvar,
@@ -388,7 +383,6 @@ class _Formulario extends StatelessWidget {
 
   final TextEditingController titulo;
   final TextEditingController texto;
-  final TextEditingController referencia;
   final bool editando;
   final bool enviando;
   final VoidCallback aoSalvar;
@@ -431,16 +425,6 @@ class _Formulario extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        TextField(
-          controller: referencia,
-          decoration: const InputDecoration(
-            labelText: 'Onde no código (opcional)',
-            hintText: 'arquivo.dart#Widget',
-            helperText: 'Ajuda quem implementa a achar o ponto exato.',
-            helperStyle: TextStyle(fontSize: 10.5),
-            isDense: true,
-          ),
-        ),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -534,17 +518,19 @@ class _CartaoSugestao extends StatelessWidget {
                 color: apagada ? AdminCores.textoSecundario : AdminCores.texto,
               ),
             ),
-            if (sugestao.referencia != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                sugestao.referencia!,
-                style: const TextStyle(
-                  fontSize: 10.5,
-                  fontFamily: 'monospace',
-                  color: AdminCores.textoSecundario,
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(Icons.place_outlined, size: 12, color: AdminCores.textoSecundario),
+                const SizedBox(width: 4),
+                Text(
+                  // Nome da página, não caminho de arquivo: o cliente não
+                  // precisa saber onde o código mora.
+                  PaginaDoPainel.de(sugestao.rota).rotulo,
+                  style: const TextStyle(fontSize: 10.5, color: AdminCores.textoSecundario),
                 ),
-              ),
-            ],
+              ],
+            ),
             const SizedBox(height: 8),
             Row(
               children: [
