@@ -172,6 +172,47 @@ class FonteHttp implements FonteDeDados {
   );
 
   @override
+  Future<String> enviarMidia(
+    String cavaloId, {
+    required List<int> bytes,
+    required String tipoConteudo,
+    required String nomeArquivo,
+  }) async {
+    try {
+      final resposta = await _cliente
+          .post(
+            _rota('/cavalos/${Uri.encodeComponent(cavaloId)}/midias'),
+            headers: {
+              ..._cabecalhosPadrao,
+              'Content-Type': tipoConteudo,
+              'X-Nome-Arquivo': Uri.encodeComponent(nomeArquivo),
+            },
+            body: bytes,
+          )
+          .timeout(tempoLimite);
+
+      if (resposta.statusCode != 201) {
+        if (resposta.statusCode >= 400) _recusar(resposta.statusCode, 'enviar a mídia');
+        throw ErroFonte(
+          'A API respondeu ${resposta.statusCode} ao enviar a mídia.',
+          status: resposta.statusCode,
+        );
+      }
+
+      final corpo = jsonDecode(utf8.decode(resposta.bodyBytes)) as Map<String, dynamic>;
+      final arquivo = corpo['arquivo'];
+      if (arquivo is! String || arquivo.isEmpty) {
+        throw const ErroFonte('A API não devolveu a URL da mídia enviada.');
+      }
+      return arquivo;
+    } on ErroFonte {
+      rethrow;
+    } catch (erro) {
+      throw ErroFonte('Não foi possível enviar a mídia.', causa: erro);
+    }
+  }
+
+  @override
   Future<void> salvarMidia(String cavaloId, Midia midia) => _enviarCorpo(
     'PUT',
     '/cavalos/${Uri.encodeComponent(cavaloId)}/midias/${Uri.encodeComponent(midia.id)}',

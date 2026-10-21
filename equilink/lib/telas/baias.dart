@@ -224,11 +224,11 @@ class _AbaBaias extends StatelessWidget {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(Raios.pequeno),
-                      child: Image.asset(
+                      child: ImagemMidia(
                         repositorio.fotoCavalo(baia.cavaloId),
-                        width: 54,
-                        height: 54,
-                        fit: BoxFit.cover,
+                        largura: 54,
+                        altura: 54,
+                        ajuste: BoxFit.cover,
                       ),
                     ),
                     const SizedBox(width: Espacos.x3),

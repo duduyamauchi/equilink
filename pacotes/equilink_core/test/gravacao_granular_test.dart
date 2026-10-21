@@ -79,6 +79,17 @@ class _FonteObservada implements FonteDeDados {
   }
 
   @override
+  Future<String> enviarMidia(
+    String cavaloId, {
+    required List<int> bytes,
+    required String tipoConteudo,
+    required String nomeArquivo,
+  }) async {
+    escritas.add('enviarMidia($cavaloId)');
+    return 'https://exemplo.invalid/$nomeArquivo';
+  }
+
+  @override
   Future<void> salvarMidia(String cavaloId, Midia midia) async {
     escritas.add('salvarMidia($cavaloId, ${midia.id})');
     final alvo = _acervo.cavaloPorId(cavaloId)!;

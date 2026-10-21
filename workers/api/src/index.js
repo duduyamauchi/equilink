@@ -907,6 +907,22 @@ export default {
           return json({ ok: true }, 200, { cabecalhos: base });
         }
 
+        // POST /cavalos/:id/midias — recebe o arquivo e devolve a URL pública.
+        //
+        // O corpo é o binário cru (sem multipart): o cliente já sabe o tipo, e
+        // multipart no Worker significa decodificar um formato de 1994 para
+        // extrair um único campo. Content-Type e X-Nome-Arquivo carregam o resto.
+        if (request.method === 'POST' && partes[2] === 'midias' && !partes[3]) {
+          if (!podeEscrever) return recusarEscrita();
+          if (!env.MIDIA) {
+            return erro('Armazenamento de mídia não configurado.', 503, { cabecalhos: base });
+          }
+          if (!(await cavaloDoHaras(sql, id, acesso.harasId))) {
+            return erro('Cavalo não encontrado.', 404, { cabecalhos: base });
+          }
+          return uploadMidia(request, env, base, id);
+        }
+
         if (request.method === 'PUT' && partes[2] === 'midias' && partes[3]) {
           if (!podeEscrever) return recusarEscrita();
           const midiaId = identificador(decodeURIComponent(partes[3]), 'midiaId');
@@ -965,6 +981,82 @@ export default {
     }
   },
 };
+
+// ---------------------------------------------------------------------------
+// Upload de mídia para o R2
+// ---------------------------------------------------------------------------
+
+/** 50 MiB: vídeo de celular cabe; o resto do acervo não justifica mais. */
+const LIMITE_UPLOAD = 50 * 1024 * 1024;
+
+/**
+ * Extensões e tipos aceitos.
+ *
+ * A lista é de permissão, não de bloqueio: um arquivo só é gravado se o
+ * Content-Type declarado estiver aqui. Isso evita hospedar HTML ou SVG — que
+ * executariam script quando servidos pelo domínio público do bucket.
+ */
+const TIPOS_MIDIA = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/avif': 'avif',
+  'image/gif': 'gif',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'video/quicktime': 'mov',
+};
+
+async function uploadMidia(request, env, base, cavaloId) {
+  const tipo = (request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+  const extensao = TIPOS_MIDIA[tipo];
+  if (!extensao) {
+    return erro(
+      'Tipo de arquivo não aceito. Use JPEG, PNG, WebP, AVIF, GIF, MP4, WebM ou MOV.',
+      415,
+      { cabecalhos: base },
+    );
+  }
+
+  const declarado = Number(request.headers.get('content-length') ?? 0);
+  if (declarado > LIMITE_UPLOAD) {
+    return erro('Arquivo acima de 50 MB.', 413, { cabecalhos: base });
+  }
+
+  const bytes = await request.arrayBuffer();
+  if (bytes.byteLength === 0) return erro('Arquivo vazio.', 400, { cabecalhos: base });
+  if (bytes.byteLength > LIMITE_UPLOAD) {
+    return erro('Arquivo acima de 50 MB.', 413, { cabecalhos: base });
+  }
+
+  // Chave gerada no servidor: o nome que o cliente mandou não vira caminho.
+  const chave = `midia/${cavaloId}/${crypto.randomUUID()}.${extensao}`;
+  await env.MIDIA.put(chave, bytes, {
+    httpMetadata: {
+      contentType: tipo,
+      // Uma semana, não um ano: o nome é único, mas o cache do navegador
+      // guarda a resposta completa — incluindo a ausência de cabeçalhos CORS se
+      // a política do bucket mudar depois. Uma janela curta permite corrigir
+      // sem exigir que o usuário limpe o cache.
+      cacheControl: 'public, max-age=604800',
+    },
+  });
+
+  const publico = env.R2_PUBLICO ?? '';
+  if (!publico) {
+    return erro('Domínio público da mídia não configurado.', 503, { cabecalhos: base });
+  }
+
+  return json(
+    {
+      arquivo: `${publico.replace(/\/$/, '')}/${chave}`,
+      tipo: tipo.startsWith('video/') ? 'video' : 'foto',
+      bytes: bytes.byteLength,
+    },
+    201,
+    { cabecalhos: base },
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Normalização: a entrada do cliente nunca chega crua ao banco

@@ -3,6 +3,7 @@ import 'package:video_player/video_player.dart';
 
 import 'package:equilink_core/equilink_core.dart';
 import '../core/tema.dart';
+import 'comuns.dart';
 
 /// Controla o visualizador de mídia no nível do aplicativo.
 ///
@@ -93,7 +94,7 @@ class VisualizadorMidia extends StatelessWidget {
                 child: midia.tipo == TipoMidia.foto
                     ? InteractiveViewer(
                         maxScale: 5,
-                        child: Image.asset(midia.arquivo, fit: BoxFit.contain),
+                        child: ImagemMidia(midia.arquivo, ajuste: BoxFit.contain),
                       )
                     : PlayerVideo(midia: midia),
               ),
@@ -205,9 +206,9 @@ class _PlayerVideoState extends State<PlayerVideo> {
                 : Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.asset(
+                      ImagemMidia(
                         widget.midia.poster ?? MidiaPadrao.capaVideo,
-                        fit: BoxFit.cover,
+                        ajuste: BoxFit.cover,
                       ),
                       ColoredBox(color: Colors.black.withValues(alpha: 0.35)),
                       Center(

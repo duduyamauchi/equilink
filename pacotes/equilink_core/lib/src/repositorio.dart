@@ -387,6 +387,41 @@ class Repositorio extends ChangeNotifier {
   // Mídias
   // ---------------------------------------------------------------------------
 
+  /// Envia o arquivo e devolve a URL pública, ou o erro em [ultimoErro].
+  ///
+  /// Não mexe no acervo: quem chama usa a URL para criar a [Midia] e gravar.
+  Future<String?> enviarMidia(
+    String cavaloId, {
+    required List<int> bytes,
+    required String tipoConteudo,
+    required String nomeArquivo,
+  }) async {
+    try {
+      final url = await fonte.enviarMidia(
+        cavaloId,
+        bytes: bytes,
+        tipoConteudo: tipoConteudo,
+        nomeArquivo: nomeArquivo,
+      );
+      analytics.registrar(
+        'midia_enviada',
+        entidade: 'midia',
+        entidadeId: cavaloId,
+        valor: bytes.length,
+        propriedades: {'tipoConteudo': tipoConteudo},
+      );
+      return url;
+    } on ErroFonte catch (e) {
+      _erro = e.mensagem;
+      notifyListeners();
+      return null;
+    } catch (e) {
+      _erro = 'Falha ao enviar a mídia: $e';
+      notifyListeners();
+      return null;
+    }
+  }
+
   Future<bool> salvarMidia(String cavaloId, Midia midia) {
     final existe = _acervo.cavaloPorId(cavaloId)?.midias.any((m) => m.id == midia.id) ?? false;
     return _aplicar(

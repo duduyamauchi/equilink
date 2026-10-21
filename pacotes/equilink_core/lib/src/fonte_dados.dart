@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'modelos.dart';
 
 /// Fotografia completa dos dados do haras.
@@ -138,6 +140,18 @@ abstract interface class FonteDeDados {
   /// Insere ou atualiza uma mídia de um cavalo.
   Future<void> salvarMidia(String cavaloId, Midia midia);
 
+  /// Envia um arquivo e devolve a URL pública para usar em [Midia.arquivo].
+  ///
+  /// O envio é separado da gravação: primeiro o arquivo chega ao armazenamento,
+  /// depois a mídia é gravada com a URL. Assim um arquivo órfão não deixa
+  /// registro apontando para nada.
+  Future<String> enviarMidia(
+    String cavaloId, {
+    required List<int> bytes,
+    required String tipoConteudo,
+    required String nomeArquivo,
+  });
+
   /// Define qual cavalo aparece no aplicativo do usuário.
   Future<void> definirPrincipal(String id);
 }
@@ -214,6 +228,19 @@ mixin GravacaoGranular implements FonteDeDados {
             : [...alvo.provas, prova],
       ),
     );
+  }
+
+  @override
+  Future<String> enviarMidia(
+    String cavaloId, {
+    required List<int> bytes,
+    required String tipoConteudo,
+    required String nomeArquivo,
+  }) async {
+    // Fonte em memória não tem armazenamento: incorpora o arquivo como data URI.
+    // Serve para demonstração e testes; em produção a FonteHttp faz o upload.
+    final base64 = base64Encode(bytes);
+    return 'data:$tipoConteudo;base64,$base64';
   }
 
   @override

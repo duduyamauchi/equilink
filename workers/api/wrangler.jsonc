@@ -3,12 +3,20 @@
   "main": "src/index.js",
   "compatibility_date": "2026-10-20",
   "observability": { "enabled": true },
+  "r2_buckets": [
+    {
+      "binding": "MIDIA",
+      "bucket_name": "quarto-midia"
+    }
+  ],
   "vars": {
     // Haras servido a visitante anônimo (vitrine do app).
     "HARAS_PUBLICO": "00000000-0000-0000-0000-000000000001",
     // Haras usado pelo token de serviço (sincronização/migração).
     "HARAS_ID": "00000000-0000-0000-0000-000000000001",
     // Origens que podem chamar a API com cookie. Allowlist exata, sem curinga.
+    // Dominio publico do bucket, usado para montar a URL devolvida no upload.
+    "R2_PUBLICO": "https://pub-8df2b57f664a42c0ad09120d9bf49cef.r2.dev",
     "ORIGENS_PERMITIDAS": "https://equilink.quarto-de-milha.workers.dev,https://equilink-admin.quarto-de-milha.workers.dev,http://localhost:8080,http://127.0.0.1:8080"
   }
 }

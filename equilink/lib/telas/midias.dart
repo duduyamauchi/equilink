@@ -89,11 +89,11 @@ class _TelaMidiasState extends State<TelaMidias> {
                           );
                           visualizador.abrir(destaque[i]);
                         },
-                      child: Image.asset(
+                      child: ImagemMidia(
                         destaque[i].tipo == TipoMidia.foto
                             ? destaque[i].arquivo
                             : destaque[i].poster ?? MidiaPadrao.capaVideo,
-                        fit: BoxFit.cover,
+                        ajuste: BoxFit.cover,
                       ),
                     ),
                   ),
@@ -205,7 +205,7 @@ class _TelaMidiasState extends State<TelaMidias> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.asset(fotos[i].arquivo, fit: BoxFit.cover),
+                      ImagemMidia(fotos[i].arquivo, ajuste: BoxFit.cover),
                       if (i == 0)
                         const Positioned(
                           top: 6,
@@ -244,9 +244,9 @@ class _TelaMidiasState extends State<TelaMidias> {
                           children: [
                             AspectRatio(
                               aspectRatio: 16 / 9,
-                              child: Image.asset(
+                              child: ImagemMidia(
                                 video.poster ?? MidiaPadrao.capaVideo,
-                                fit: BoxFit.cover,
+                                ajuste: BoxFit.cover,
                               ),
                             ),
                             Positioned.fill(

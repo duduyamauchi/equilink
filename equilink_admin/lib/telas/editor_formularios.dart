@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:equilink_core/equilink_core.dart';
 
@@ -844,6 +847,16 @@ class AbaMidias extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Miniatura: é o que permite reconhecer a mídia sem abrir.
+                        // A URL remota é a mesma que o aplicativo exibe.
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AdminRaios.pequeno),
+                          child: AspectRatio(
+                            aspectRatio: 16 / 10,
+                            child: _MiniaturaMidia(midia: midia),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
                             Icon(
@@ -907,81 +920,226 @@ class AbaMidias extends StatelessWidget {
     );
   }
 
+  /// Tipos que a API aceita; a mesma lista em `TIPOS_MIDIA` no Worker.
+  static const _tiposAceitos = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'webp': 'image/webp',
+    'avif': 'image/avif',
+    'gif': 'image/gif',
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'mov': 'video/quicktime',
+  };
+
   Future<void> _editar(BuildContext context, Midia? midia) async {
     final rep = AdminEscopo.de(context);
     final legenda = TextEditingController(text: midia?.legenda ?? '');
-    final arquivo = TextEditingController(text: midia?.arquivo ?? MidiaPadrao.imagem);
-    final poster = TextEditingController(text: midia?.poster ?? '');
-    final duracao = TextEditingController(text: '${midia?.duracaoSegundos ?? 10}');
     final local = TextEditingController(text: midia?.local ?? '');
     var tipo = midia?.tipo ?? TipoMidia.foto;
+
+    // Estado do arquivo: no modo edição começa com a URL atual.
+    String? arquivo = midia?.arquivo;
+    Uint8List? bytesNovos;
+    String? nomeNovo;
+    String? tipoNovo;
+    String? erroArquivo;
+    var enviando = false;
 
     final salvar = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, atualizar) => AlertDialog(
-          title: Text(midia == null ? 'Nova mídia' : 'Editar mídia'),
-          content: SizedBox(
-            width: 540,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _Linha(
-                    filhos: [
-                      DropdownButtonFormField<TipoMidia>(
-                        initialValue: tipo,
-                        decoration: const InputDecoration(labelText: 'Tipo'),
-                        items: const [
-                          DropdownMenuItem(value: TipoMidia.foto, child: Text('Foto')),
-                          DropdownMenuItem(value: TipoMidia.video, child: Text('Vídeo')),
-                        ],
-                        onChanged: (v) => atualizar(() => tipo = v ?? tipo),
-                      ),
-                      _Campo(nome: 'Legenda', controlador: legenda),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _Linha(
-                    filhos: [
-                      _Campo(nome: 'Arquivo (asset ou URL)', controlador: arquivo),
-                      _Campo(nome: 'Local', controlador: local),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (tipo == TipoMidia.video)
+        builder: (context, atualizar) {
+          // Dart não promove variável capturada e mutável; os snapshots abaixo
+          // dão ao compilador um valor estável por build.
+          final bytesAtuais = bytesNovos;
+          final arquivoAtual = arquivo;
+          final erroAtual = erroArquivo;
+
+          Future<void> escolherArquivo() async {
+            final escolhido = await FilePicker.pickFile(
+              dialogTitle: 'Escolher foto ou vídeo',
+              type: FileType.custom,
+              allowedExtensions: _tiposAceitos.keys.toList(),
+            );
+            if (escolhido == null) return;
+
+            final extensao = (escolhido.extension ?? '').toLowerCase();
+            final tipoConteudo = _tiposAceitos[extensao];
+            if (tipoConteudo == null) {
+              atualizar(() => erroArquivo = 'Extensão .$extensao não é aceita.');
+              return;
+            }
+            if (escolhido.lengthSync() != null && escolhido.lengthSync()! > 50 * 1024 * 1024) {
+              atualizar(() => erroArquivo = 'Arquivo acima de 50 MB.');
+              return;
+            }
+
+            atualizar(() {
+              enviando = true;
+              erroArquivo = null;
+            });
+
+            final lidos = await escolhido.readAsBytes();
+            atualizar(() {
+              bytesNovos = lidos;
+              nomeNovo = escolhido.name;
+              tipoNovo = tipoConteudo;
+              tipo = tipoConteudo.startsWith('video/') ? TipoMidia.video : TipoMidia.foto;
+              enviando = false;
+            });
+          }
+
+          return AlertDialog(
+            title: Text(midia == null ? 'Nova mídia' : 'Editar mídia'),
+            content: SizedBox(
+              width: 540,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     _Linha(
                       filhos: [
-                        _Campo(nome: 'Duração em segundos', controlador: duracao),
-                        _Campo(nome: 'Imagem de capa', controlador: poster),
+                        DropdownButtonFormField<TipoMidia>(
+                          initialValue: tipo,
+                          decoration: const InputDecoration(labelText: 'Tipo'),
+                          items: const [
+                            DropdownMenuItem(value: TipoMidia.foto, child: Text('Foto')),
+                            DropdownMenuItem(value: TipoMidia.video, child: Text('Vídeo')),
+                          ],
+                          onChanged: (v) => atualizar(() => tipo = v ?? tipo),
+                        ),
+                        _Campo(nome: 'Local', controlador: local),
                       ],
                     ),
-                  const Text(
-                    'Informe caminhos de asset (assets/img/...) ou endereços completos. '
-                    'Quando houver backend, o mesmo campo aceita a URL do arquivo enviado.',
-                    style: TextStyle(fontSize: 11.5, color: AdminCores.textoSecundario, height: 1.4),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    _Campo(nome: 'Legenda', controlador: legenda),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Arquivo',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AdminCores.superficieSuave,
+                        borderRadius: BorderRadius.circular(AdminRaios.pequeno),
+                        border: Border.all(color: AdminCores.borda),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (bytesAtuais != null)
+                            Text(
+                              '$nomeNovo • ${(bytesAtuais.length / 1024).toStringAsFixed(0)} KB — será enviado ao salvar',
+                              style: const TextStyle(fontSize: 12, color: AdminCores.verde),
+                            )
+                          else if (arquivoAtual != null)
+                            Text(
+                              arquivoAtual,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 11.5, color: AdminCores.textoSecundario),
+                            )
+                          else
+                            const Text(
+                              'Nenhum arquivo escolhido.',
+                              style: TextStyle(fontSize: 11.5, color: AdminCores.textoSecundario),
+                            ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: enviando ? null : escolherArquivo,
+                                icon: enviando
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.upload_file, size: 16),
+                                label: Text(arquivoAtual == null ? 'Escolher arquivo' : 'Trocar arquivo'),
+                              ),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'JPEG, PNG, WebP, AVIF, GIF, MP4, WebM ou MOV · até 50 MB',
+                                  style: TextStyle(fontSize: 11, color: AdminCores.textoSecundario),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (erroAtual != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              erroAtual,
+                              style: const TextStyle(fontSize: 11.5, color: AdminCores.vermelho),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Salvar')),
-          ],
-        ),
+            actions: [
+              TextButton(
+                onPressed: enviando ? null : () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: enviando ? null : () => Navigator.of(context).pop(true),
+                child: const Text('Salvar'),
+              ),
+            ],
+          );
+        },
       ),
     );
     if (salvar != true) return;
 
+    // O arquivo sobe antes de a mídia existir: se o envio falhar, nada é gravado
+    // e o operador não fica com um registro apontando para uma URL vazia.
+    if (bytesNovos != null) {
+      final url = await rep.enviarMidia(
+        cavalo.id,
+        bytes: bytesNovos!,
+        tipoConteudo: tipoNovo!,
+        nomeArquivo: nomeNovo!,
+      );
+      if (url == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(rep.erro ?? 'Falha ao enviar a mídia.')),
+          );
+        }
+        return;
+      }
+      arquivo = url;
+    }
+
+    if (arquivo == null || arquivo.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Escolha um arquivo para a mídia.')),
+        );
+      }
+      return;
+    }
+
     final nova = Midia(
       id: midia?.id ?? rep.novoId('midia'),
       tipo: tipo,
-      arquivo: arquivo.text.trim(),
+      arquivo: arquivo,
       legenda: legenda.text.trim(),
       local: local.text.trim().isEmpty ? null : local.text.trim(),
-      duracaoSegundos: tipo == TipoMidia.video ? int.tryParse(duracao.text.trim()) : null,
-      poster: tipo == TipoMidia.video && poster.text.trim().isNotEmpty ? poster.text.trim() : null,
+      duracaoSegundos: midia?.duracaoSegundos,
+      poster: midia?.poster,
     );
     await rep.salvarMidia(cavalo.id, nova);
   }
@@ -1580,3 +1738,79 @@ String _data(DateTime d) =>
 
 String _dataHora(DateTime d) => '${_data(d)} às ${d.hour.toString().padLeft(2, '0')}:'
     '${d.minute.toString().padLeft(2, '0')}';
+
+
+/// Miniatura de uma mídia no painel.
+///
+/// Aceita tanto `assets/...` (acervo de demonstração) quanto a URL do R2 que o
+/// upload devolve. Sem isso o cartão mostrava apenas o caminho do arquivo.
+class _MiniaturaMidia extends StatelessWidget {
+  const _MiniaturaMidia({required this.midia});
+
+  final Midia midia;
+
+  bool get _remota =>
+      midia.arquivo.startsWith('http://') || midia.arquivo.startsWith('https://');
+
+  @override
+  Widget build(BuildContext context) {
+    final capa = midia.tipo == TipoMidia.video
+        ? (midia.poster ?? MidiaPadrao.capaVideo)
+        : midia.arquivo;
+
+    final imagem = capa.startsWith('http')
+        ? Image.network(
+            capa,
+            fit: BoxFit.cover,
+            errorBuilder: (context, erro, pilha) => const _SemMiniatura(),
+            loadingBuilder: (context, filho, progresso) =>
+                progresso == null ? filho : const _SemMiniatura(),
+          )
+        : Image.asset(
+            capa,
+            fit: BoxFit.cover,
+            errorBuilder: (context, erro, pilha) => const _SemMiniatura(),
+          );
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        imagem,
+        if (midia.tipo == TipoMidia.video)
+          const Center(
+            child: Icon(Icons.play_circle_outline, size: 30, color: Colors.white70),
+          ),
+        if (_remota)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(AdminRaios.total),
+              ),
+              child: const Text(
+                'R2',
+                style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SemMiniatura extends StatelessWidget {
+  const _SemMiniatura();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: AdminCores.superficieSuave,
+      child: Center(
+        child: Icon(Icons.broken_image_outlined, size: 20, color: AdminCores.textoSecundario),
+      ),
+    );
+  }
+}

@@ -536,3 +536,80 @@ class BotaoDourado extends StatelessWidget {
     );
   }
 }
+
+/// Imagem de uma mídia, seja asset empacotado ou arquivo no armazenamento.
+///
+/// O acervo de demonstração aponta para `assets/...`; o que o painel envia vai
+/// para o R2 e chega como URL `https`. Decidir isso em cada tela espalhava a
+/// mesma condição por seis lugares.
+class ImagemMidia extends StatelessWidget {
+  const ImagemMidia(
+    this.arquivo, {
+    super.key,
+    this.ajuste = BoxFit.cover,
+    this.largura,
+    this.altura,
+    this.placeholder,
+  });
+
+  final String arquivo;
+  final BoxFit ajuste;
+  final double? largura;
+  final double? altura;
+
+  /// Mostrado enquanto a imagem remota carrega ou se ela falhar.
+  final Widget? placeholder;
+
+  bool get _remota => arquivo.startsWith('http://') || arquivo.startsWith('https://') || arquivo.startsWith('data:');
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_remota) {
+      return Image.asset(arquivo, fit: ajuste, width: largura, height: altura);
+    }
+    return Image.network(
+      arquivo,
+      fit: ajuste,
+      width: largura,
+      height: altura,
+      // O bucket é imutável (nome único), então o cache do navegador pode reter.
+      loadingBuilder: (context, filho, progresso) {
+        if (progresso == null) return filho;
+        return placeholder ?? const _MidiaCarregando();
+      },
+      errorBuilder: (context, erro, pilha) => placeholder ?? const _MidiaIndisponivel(),
+    );
+  }
+}
+
+class _MidiaCarregando extends StatelessWidget {
+  const _MidiaCarregando();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Cores.trilho,
+      child: Center(
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    );
+  }
+}
+
+class _MidiaIndisponivel extends StatelessWidget {
+  const _MidiaIndisponivel();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Cores.trilho,
+      child: Center(
+        child: Icon(Icons.broken_image_outlined, size: 22, color: Cores.textoSecundario),
+      ),
+    );
+  }
+}

@@ -84,11 +84,11 @@ class _TelaBaiaDetalheState extends State<TelaBaiaDetalhe> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(Raios.pequeno),
-                      child: Image.asset(
+                      child: ImagemMidia(
                         repositorio.fotoCavalo(baia.cavaloId),
-                        width: 62,
-                        height: 62,
-                        fit: BoxFit.cover,
+                        largura: 62,
+                        altura: 62,
+                        ajuste: BoxFit.cover,
                       ),
                     ),
                     const SizedBox(width: Espacos.x3),

@@ -87,11 +87,11 @@ class _TelaPerfilState extends State<TelaPerfil> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(Raios.pequeno),
-                      child: Image.asset(
+                      child: ImagemMidia(
                         cavalo.fotoPerfil,
-                        width: 64,
-                        height: 64,
-                        fit: BoxFit.cover,
+                        largura: 64,
+                        altura: 64,
+                        ajuste: BoxFit.cover,
                       ),
                     ),
                     const SizedBox(width: Espacos.x3),
@@ -380,7 +380,7 @@ class _Carrossel extends StatelessWidget {
             onPageChanged: aoMudarPagina,
             itemBuilder: (context, i) => GestureDetector(
               onTap: () => aoAbrirFoto(i),
-              child: Image.asset(fotos[i].arquivo, fit: BoxFit.cover),
+              child: ImagemMidia(fotos[i].arquivo, ajuste: BoxFit.cover),
             ),
           ),
           Positioned(
@@ -451,7 +451,7 @@ class _GradeFotos extends StatelessWidget {
         borderRadius: BorderRadius.circular(Raios.pequeno),
         child: GestureDetector(
           onTap: () => aoAbrir(fotos[i]),
-          child: Image.asset(fotos[i].arquivo, fit: BoxFit.cover),
+          child: ImagemMidia(fotos[i].arquivo, ajuste: BoxFit.cover),
         ),
       ),
     );
@@ -479,9 +479,9 @@ class _ListaVideos extends StatelessWidget {
                   children: [
                     AspectRatio(
                       aspectRatio: 16 / 9,
-                      child: Image.asset(
+                      child: ImagemMidia(
                         video.poster ?? MidiaPadrao.capaVideo,
-                        fit: BoxFit.cover,
+                        ajuste: BoxFit.cover,
                       ),
                     ),
                     Positioned.fill(
