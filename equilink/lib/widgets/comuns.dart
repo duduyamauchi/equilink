@@ -36,6 +36,9 @@ class AbasPilula extends StatelessWidget {
             Expanded(
               child: _Aba(
                 rotulo: abas[i],
+                // Em telas estreitas o rótulo longo vira reticências
+                // ("Geneal…"), que não informam nada. Aí só a inicial ajuda.
+                rotuloCurto: _curto(abas[i]),
                 contagem: contagens != null && i < contagens!.length ? contagens![i] : null,
                 ativa: i == selecionada,
                 aoTocar: () => aoSelecionar(i),
@@ -52,10 +55,14 @@ class _Aba extends StatelessWidget {
     required this.rotulo,
     required this.ativa,
     required this.aoTocar,
+    required this.rotuloCurto,
     this.contagem,
   });
 
   final String rotulo;
+
+  /// Rótulo de uma ou duas letras para larguras muito estreitas.
+  final String rotuloCurto;
   final bool ativa;
   final VoidCallback aoTocar;
   final int? contagem;
@@ -76,48 +83,73 @@ class _Aba extends StatelessWidget {
             // 10+10 com texto de 13 px dava 39 px de altura: abaixo do mínimo
             // de 44 para toque em celular.
             padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 6),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    rotulo,
+            // FittedBox reduzia a linha inteira: em 320 px o rótulo quebrava
+            // no meio ("Genealogi/a"). O texto agora encolhe sozinho, com
+            // reticências quando não couber.
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: Text(
+                    // Abaixo de 340 px de largura total, o nome completo não
+                    // cabe em nenhuma das quatro abas.
+                    MediaQuery.sizeOf(context).width < 360 ? rotuloCurto : rotulo,
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: ativa ? FontWeight.w600 : FontWeight.w500,
                       color: ativa ? Colors.white : Cores.textoSecundario,
                     ),
                   ),
-                  if (contagem != null) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: ativa
-                            ? Colors.white.withValues(alpha: 0.18)
-                            : Cores.superficie,
-                        borderRadius: BorderRadius.circular(Raios.total),
-                      ),
-                      child: Text(
-                        '$contagem',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: ativa ? Colors.white : Cores.textoSecundario,
-                        ),
+                ),
+                if (contagem != null) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: ativa
+                          ? Colors.white.withValues(alpha: 0.18)
+                          : Cores.superficie,
+                      borderRadius: BorderRadius.circular(Raios.total),
+                    ),
+                    child: Text(
+                      '$contagem',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: ativa ? Colors.white : Cores.textoSecundario,
                       ),
                     ),
-                  ],
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Abreviação estável de um rótulo de aba para telas estreitas.
+String _curto(String rotulo) {
+  const mapa = {
+    'Fotos': 'F',
+    'Vídeos': 'V',
+    'Genealogia': 'G',
+    'Histórico': 'H',
+    'Baias': 'B',
+    'Manejo': 'M',
+    'Relatórios': 'R',
+    'Árvore': 'Á',
+    'Lista': 'L',
+    'Ancestrais': 'A',
+    'Provas': 'P',
+  };
+  return mapa[rotulo] ?? rotulo.characters.first.toUpperCase();
 }
 
 /// Etiqueta de situação (baia em dia, em manutenção, gravidade etc.).
