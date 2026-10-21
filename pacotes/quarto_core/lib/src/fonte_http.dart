@@ -21,10 +21,18 @@ import 'modelos.dart';
 /// O cabeçalho `Authorization` é enviado quando [cabecalhos] traz um token.
 /// A gravação é por entidade para que dois operadores editando registros
 /// diferentes não se sobrescrevam.
+///
+/// Sessão: com [usarCookies], o navegador envia o cookie `HttpOnly` emitido por
+/// `POST /sessao`. O token de sessão nunca passa por Dart — um XSS não consegue
+/// lê-lo, só o próprio navegador o apresenta.
+///
+/// Respostas `401` viram [ErroAutenticacao] para a interface pedir login, e
+/// `403` viram [ErroPermissao] para explicar que o papel não permite.
 class FonteHttp implements FonteDeDados {
   FonteHttp({
     required this.base,
     this.cabecalhos = const {},
+    this.usarCookies = true,
     this.tempoLimite = const Duration(seconds: 20),
     http.Client? cliente,
   }) : _cliente = cliente ?? http.Client();
@@ -32,6 +40,15 @@ class FonteHttp implements FonteDeDados {
   /// Raiz da API, sem barra final (ex.: `https://api.haras.app`).
   final String base;
   final Map<String, String> cabecalhos;
+
+  /// Envia e aceita o cookie de sessão do navegador.
+  ///
+  /// No web quem controla o cookie é o próprio navegador; fora dele, o padrão
+  /// `http.Client` ignora cookies, então a sessão por cookie é um recurso da
+  /// versão web — no Android/iOS o mesmo backend deve ser acessado com o token
+  /// de serviço em [cabecalhos].
+  final bool usarCookies;
+
   final Duration tempoLimite;
   final http.Client _cliente;
 
@@ -49,15 +66,23 @@ class FonteHttp implements FonteDeDados {
     ...cabecalhos,
   };
 
+  /// Traduz o status HTTP em erro de domínio, para a interface reagir.
+  Never _recusar(int status, String acao) {
+    if (status == 401) {
+      throw ErroAutenticacao('Sessão expirada ou não iniciada.', status: status);
+    }
+    if (status == 403) {
+      throw ErroPermissao('Seu perfil não permite $acao.', status: status);
+    }
+    throw ErroFonte('A API recusou $acao ($status).', status: status);
+  }
+
   @override
   Future<Acervo> carregar() async {
     try {
       final resposta = await _cliente.get(_endpoint, headers: _cabecalhosPadrao).timeout(tempoLimite);
       if (resposta.statusCode != 200) {
-        throw ErroFonte(
-          'A API respondeu ${resposta.statusCode} ao carregar o acervo.',
-          status: resposta.statusCode,
-        );
+        _recusar(resposta.statusCode, 'carregar o acervo');
       }
       final corpo = jsonDecode(utf8.decode(resposta.bodyBytes)) as Map<String, dynamic>;
       return Acervo.fromJson(corpo);
@@ -103,10 +128,7 @@ class FonteHttp implements FonteDeDados {
           ? await _cliente.put(uri, headers: _cabecalhosPadrao, body: jsonEncode(corpo)).timeout(tempoLimite)
           : await _cliente.post(uri, headers: _cabecalhosPadrao, body: jsonEncode(corpo)).timeout(tempoLimite);
       if (resposta.statusCode >= 400) {
-        throw ErroFonte(
-          'A API recusou $metodo $caminho (${resposta.statusCode}).',
-          status: resposta.statusCode,
-        );
+        _recusar(resposta.statusCode, '$metodo $caminho');
       }
     } on ErroFonte {
       rethrow;
@@ -119,10 +141,7 @@ class FonteHttp implements FonteDeDados {
     try {
       final resposta = await _cliente.delete(_rota(caminho), headers: _cabecalhosPadrao).timeout(tempoLimite);
       if (resposta.statusCode >= 400 && resposta.statusCode != 404) {
-        throw ErroFonte(
-          'A API recusou DELETE $caminho (${resposta.statusCode}).',
-          status: resposta.statusCode,
-        );
+        _recusar(resposta.statusCode, 'remover $caminho');
       }
     } on ErroFonte {
       rethrow;

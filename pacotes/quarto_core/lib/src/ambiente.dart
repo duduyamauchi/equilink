@@ -2,6 +2,7 @@ import 'analytics/coletor.dart';
 import 'fonte_dados.dart';
 import 'fonte_http.dart';
 import 'fonte_memoria.dart';
+import 'sessao.dart';
 
 /// Configuração de ambiente do aplicativo.
 ///
@@ -61,6 +62,12 @@ abstract final class Ambiente {
       default:
         return ColetorMemoria();
     }
+  }
+
+  /// Cliente de sessão, quando a fonte é `http`. `null` sem backend.
+  static SessaoApi? criarSessao() {
+    if (fonte != 'http' || api.isEmpty) return null;
+    return SessaoApi(base: api);
   }
 
   /// Monta a fonte de dados conforme a configuração acima.
