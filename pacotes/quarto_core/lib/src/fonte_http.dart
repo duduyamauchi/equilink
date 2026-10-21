@@ -3,19 +3,24 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'fonte_dados.dart';
+import 'modelos.dart';
 
 /// Fonte de dados servida por uma API REST.
 ///
 /// Contrato esperado do backend:
 ///
-/// | Método | Rota      | Corpo                 | Resposta            |
-/// |--------|-----------|-----------------------|---------------------|
-/// | GET    | `/acervo` | —                     | `Acervo` em JSON    |
-/// | PUT    | `/acervo` | `Acervo` em JSON      | `Acervo` gravado    |
+/// | Método | Rota                    | Corpo              |
+/// |--------|-------------------------|--------------------|
+/// | GET    | `/acervo`               | —                  |
+/// | PUT    | `/acervo`               | `Acervo` (total)   |
+/// | PUT    | `/cavalos/:id`          | `Cavalo`           |
+/// | DELETE | `/cavalos/:id`          | —                  |
+/// | PUT    | `/baias/:numero`        | `Baia`             |
+/// | DELETE | `/baias/:numero`        | —                  |
 ///
 /// O cabeçalho `Authorization` é enviado quando [cabecalhos] traz um token.
-/// Para um backend com rotas por recurso (`/cavalos`, `/baias`), basta
-/// implementar [FonteDeDados] de novo — nenhuma tela precisa mudar.
+/// A gravação é por entidade para que dois operadores editando registros
+/// diferentes não se sobrescrevam.
 class FonteHttp implements FonteDeDados {
   FonteHttp({
     required this.base,
@@ -84,6 +89,82 @@ class FonteHttp implements FonteDeDados {
       throw ErroFonte('Não foi possível gravar o acervo na API.', causa: erro);
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Gravação por entidade
+  // ---------------------------------------------------------------------------
+
+  Uri _rota(String caminho) => Uri.parse('$base$caminho');
+
+  Future<void> _enviarCorpo(String metodo, String caminho, Map<String, dynamic> corpo) async {
+    try {
+      final uri = _rota(caminho);
+      final resposta = metodo == 'PUT'
+          ? await _cliente.put(uri, headers: _cabecalhosPadrao, body: jsonEncode(corpo)).timeout(tempoLimite)
+          : await _cliente.post(uri, headers: _cabecalhosPadrao, body: jsonEncode(corpo)).timeout(tempoLimite);
+      if (resposta.statusCode >= 400) {
+        throw ErroFonte(
+          'A API recusou $metodo $caminho (${resposta.statusCode}).',
+          status: resposta.statusCode,
+        );
+      }
+    } on ErroFonte {
+      rethrow;
+    } catch (erro) {
+      throw ErroFonte('Falha ao gravar $caminho.', causa: erro);
+    }
+  }
+
+  Future<void> _remover(String caminho) async {
+    try {
+      final resposta = await _cliente.delete(_rota(caminho), headers: _cabecalhosPadrao).timeout(tempoLimite);
+      if (resposta.statusCode >= 400 && resposta.statusCode != 404) {
+        throw ErroFonte(
+          'A API recusou DELETE $caminho (${resposta.statusCode}).',
+          status: resposta.statusCode,
+        );
+      }
+    } on ErroFonte {
+      rethrow;
+    } catch (erro) {
+      throw ErroFonte('Falha ao remover $caminho.', causa: erro);
+    }
+  }
+
+  @override
+  Future<void> salvarCavalo(Cavalo cavalo) =>
+      _enviarCorpo('PUT', '/cavalos/${Uri.encodeComponent(cavalo.id)}', cavalo.toJson());
+
+  @override
+  Future<void> removerCavalo(String id) => _remover('/cavalos/${Uri.encodeComponent(id)}');
+
+  @override
+  Future<void> salvarBaia(Baia baia) =>
+      _enviarCorpo('PUT', '/baias/${Uri.encodeComponent(baia.numero)}', baia.toJson());
+
+  @override
+  Future<void> removerBaia(String numero) => _remover('/baias/${Uri.encodeComponent(numero)}');
+
+  @override
+  Future<void> salvarProva(String cavaloId, Prova prova) => _enviarCorpo(
+    'PUT',
+    '/cavalos/${Uri.encodeComponent(cavaloId)}/provas/${Uri.encodeComponent(prova.id)}',
+    prova.toJson(),
+  );
+
+  @override
+  Future<void> salvarMidia(String cavaloId, Midia midia) => _enviarCorpo(
+    'PUT',
+    '/cavalos/${Uri.encodeComponent(cavaloId)}/midias/${Uri.encodeComponent(midia.id)}',
+    midia.toJson(),
+  );
+
+  @override
+  Future<void> definirPrincipal(String id) => _enviarCorpo(
+    'POST',
+    '/cavalos/${Uri.encodeComponent(id)}/principal',
+    const {},
+  );
 
   void encerrar() => _cliente.close();
 }

@@ -8,7 +8,7 @@ import 'fonte_dados.dart';
 /// É a fonte padrão do aplicativo: não exige backend e mantém as alterações
 /// apenas durante a sessão. Serve de referência de comportamento para as
 /// demais implementações.
-class FonteMemoria implements FonteDeDados {
+class FonteMemoria with GravacaoGranular implements FonteDeDados {
   FonteMemoria({Acervo? inicial, this.atraso = Duration.zero})
     : _acervo = inicial ?? acervoDeDemonstracao();
 
@@ -16,6 +16,12 @@ class FonteMemoria implements FonteDeDados {
 
   /// Atraso simulado, útil para exercitar estados de carregamento.
   final Duration atraso;
+
+  @override
+  Acervo get acervoAtual => _acervo;
+
+  @override
+  set acervoAtual(Acervo valor) => _acervo = valor;
 
   @override
   String get descricao => 'memória (demonstração)';

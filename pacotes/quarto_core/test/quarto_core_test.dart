@@ -288,8 +288,14 @@ void main() {
 }
 
 /// Fonte que recusa qualquer escrita.
-class _FonteSomenteLeitura implements FonteDeDados {
+class _FonteSomenteLeitura with GravacaoGranular implements FonteDeDados {
   final _acervo = FonteMemoria.acervoDeDemonstracao();
+
+  @override
+  Acervo get acervoAtual => _acervo;
+
+  @override
+  set acervoAtual(Acervo valor) {}
 
   @override
   String get descricao => 'somente leitura';
@@ -302,10 +308,18 @@ class _FonteSomenteLeitura implements FonteDeDados {
 }
 
 /// Fonte que sempre falha na rede (e opcionalmente funciona na leitura).
-class _FonteQuebrada implements FonteDeDados {
+class _FonteQuebrada with GravacaoGranular implements FonteDeDados {
   _FonteQuebrada({this.leituraOk = false});
 
   final bool leituraOk;
+
+  Acervo _conhecido = FonteMemoria.acervoDeDemonstracao();
+
+  @override
+  Acervo get acervoAtual => _conhecido;
+
+  @override
+  set acervoAtual(Acervo valor) => _conhecido = valor;
 
   @override
   String get descricao => 'quebrada';

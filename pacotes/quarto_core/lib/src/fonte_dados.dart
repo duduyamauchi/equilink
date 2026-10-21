@@ -96,5 +96,140 @@ abstract interface class FonteDeDados {
 
   /// Persiste o acervo completo e devolve o estado efetivamente gravado
   /// (o backend pode normalizar identificadores e incrementar a versão).
+  ///
+  /// Usado como fallback e para substituição total. **Não** é o caminho das
+  /// gravações do dia a dia: duas pessoas editando ao mesmo tempo se
+  /// sobrescreveriam. Prefira os métodos por entidade abaixo.
   Future<Acervo> salvar(Acervo acervo);
+
+  // ---------------------------------------------------------------------------
+  // Gravação por entidade
+  //
+  // Cada operação toca apenas o registro afetado, então dois operadores
+  // editando animais diferentes não se atropelam. Implementações em memória
+  // podem herdar o comportamento simples via [gravacaoGranular].
+  // ---------------------------------------------------------------------------
+
+  /// Insere ou atualiza um cavalo (com suas provas e mídias aninhadas).
+  Future<void> salvarCavalo(Cavalo cavalo);
+
+  /// Remove um cavalo e, em cascata, suas provas e mídias.
+  Future<void> removerCavalo(String id);
+
+  /// Insere ou atualiza uma baia.
+  Future<void> salvarBaia(Baia baia);
+
+  /// Remove uma baia e, em cascata, manejo, ocorrências e observações.
+  Future<void> removerBaia(String numero);
+
+  /// Insere ou atualiza uma prova de um cavalo.
+  Future<void> salvarProva(String cavaloId, Prova prova);
+
+  /// Insere ou atualiza uma mídia de um cavalo.
+  Future<void> salvarMidia(String cavaloId, Midia midia);
+
+  /// Define qual cavalo aparece no aplicativo do usuário.
+  Future<void> definirPrincipal(String id);
+}
+
+/// Comportamento padrão para fontes sem gravação granular.
+///
+/// Aplica a mudança sobre o acervo em memória e delega para [salvar]. Serve
+/// para `FonteMemoria` e para qualquer fonte de teste; uma fonte real (SQL,
+/// API por recurso) deve sobrescrever os métodos.
+mixin GravacaoGranular implements FonteDeDados {
+  /// Acervo atualmente conhecido pela fonte.
+  Acervo get acervoAtual;
+
+  /// Substitui o acervo conhecido após gravação.
+  set acervoAtual(Acervo valor);
+
+  @override
+  Future<void> salvarCavalo(Cavalo cavalo) async {
+    final atual = acervoAtual;
+    final existe = atual.cavalos.any((c) => c.id == cavalo.id);
+    acervoAtual = await salvar(
+      atual.copiarCom(
+        cavalos: existe
+            ? [for (final c in atual.cavalos) if (c.id == cavalo.id) cavalo else c]
+            : [...atual.cavalos, cavalo],
+      ),
+    );
+  }
+
+  @override
+  Future<void> removerCavalo(String id) async {
+    final atual = acervoAtual;
+    acervoAtual = await salvar(
+      atual.copiarCom(
+        cavalos: [for (final c in atual.cavalos) if (c.id != id) c],
+        baias: [for (final b in atual.baias) if (b.cavaloId != id) b],
+      ),
+    );
+  }
+
+  @override
+  Future<void> salvarBaia(Baia baia) async {
+    final atual = acervoAtual;
+    final existe = atual.baias.any((b) => b.numero == baia.numero);
+    acervoAtual = await salvar(
+      atual.copiarCom(
+        baias: existe
+            ? [for (final b in atual.baias) if (b.numero == baia.numero) baia else b]
+            : [...atual.baias, baia],
+      ),
+    );
+  }
+
+  @override
+  Future<void> removerBaia(String numero) async {
+    final atual = acervoAtual;
+    acervoAtual = await salvar(
+      atual.copiarCom(baias: [for (final b in atual.baias) if (b.numero != numero) b]),
+    );
+  }
+
+  @override
+  Future<void> salvarProva(String cavaloId, Prova prova) async {
+    final atual = acervoAtual;
+    final alvo = atual.cavaloPorId(cavaloId);
+    if (alvo == null) {
+      throw ErroFonte('Cavalo $cavaloId não encontrado para gravar a prova.');
+    }
+    final existe = alvo.provas.any((p) => p.id == prova.id);
+    await salvarCavalo(
+      alvo.copiarCom(
+        provas: existe
+            ? [for (final p in alvo.provas) if (p.id == prova.id) prova else p]
+            : [...alvo.provas, prova],
+      ),
+    );
+  }
+
+  @override
+  Future<void> salvarMidia(String cavaloId, Midia midia) async {
+    final atual = acervoAtual;
+    final alvo = atual.cavaloPorId(cavaloId);
+    if (alvo == null) {
+      throw ErroFonte('Cavalo $cavaloId não encontrado para gravar a mídia.');
+    }
+    final existe = alvo.midias.any((m) => m.id == midia.id);
+    await salvarCavalo(
+      alvo.copiarCom(
+        midias: existe
+            ? [for (final m in alvo.midias) if (m.id == midia.id) midia else m]
+            : [...alvo.midias, midia],
+      ),
+    );
+  }
+
+  @override
+  Future<void> definirPrincipal(String id) async {
+    final atual = acervoAtual;
+    await salvar(
+      atual.copiarCom(
+        cavalos: [for (final c in atual.cavalos) c.copiarCom(principal: c.id == id)],
+      ),
+    );
+  }
 }

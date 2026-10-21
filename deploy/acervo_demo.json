@@ -1,0 +1,1082 @@
+{
+ "versao": 1,
+ "cavalos": [
+  {
+   "id": "tornado-do-vale",
+   "nome": "TORNADO DO VALE",
+   "registro": "P347821",
+   "sexo": "macho",
+   "nascimento": "2017-03-12T00:00:00.000",
+   "pelagem": "Alazão",
+   "raca": "Quarto de Milha",
+   "altura": "1,58 m",
+   "peso": "545 kg",
+   "descricao": "Animal do plantel do Fazenda Santa Helena, mantido no mesmo manejo e acompanhamento sanitário do haras.",
+   "proprietario": {
+    "nome": "João da Silva",
+    "fazenda": "Fazenda Santa Helena",
+    "telefone": "(11) 99999-9999",
+    "cidade": "Porto Feliz - SP"
+   },
+   "criador": {
+    "nome": "Haras Toro Leo",
+    "cidade": "Porto Feliz - SP"
+   },
+   "pai": {
+    "nome": "Toro Leo",
+    "registro": "ABQM 210.998",
+    "pelagem": "Castanha",
+    "pai": {
+     "nome": "Doc Bar",
+     "registro": "ABQM 102.334",
+     "pelagem": "Alazã"
+    },
+    "mae": {
+     "nome": "Miss Holly Bee",
+     "registro": "AQHA 445.210",
+     "pelagem": "Castanha"
+    }
+   },
+   "mae": {
+    "nome": "Badger Star",
+    "registro": "ABQM 265.447",
+    "pelagem": "Tordilha",
+    "pai": {
+     "nome": "Grey Badger II",
+     "registro": "AQHA 221.905",
+     "pelagem": "Tordilha"
+    },
+    "mae": {
+     "nome": "Freckles Lady",
+     "registro": "AQHA 338.441",
+     "pelagem": "Castanha"
+    }
+   },
+   "fotoPerfil": "assets/img/p2.jpg",
+   "midias": [],
+   "provas": [],
+   "principal": false
+  },
+  {
+   "id": "luna-badger",
+   "nome": "LUNA BADGER",
+   "registro": "P321554",
+   "sexo": "femea",
+   "nascimento": "2019-11-02T00:00:00.000",
+   "pelagem": "Tordilha",
+   "raca": "Quarto de Milha",
+   "altura": "1,49 m",
+   "peso": "480 kg",
+   "descricao": "Animal do plantel do Fazenda Santa Helena, mantido no mesmo manejo e acompanhamento sanitário do haras.",
+   "proprietario": {
+    "nome": "João da Silva",
+    "fazenda": "Fazenda Santa Helena",
+    "telefone": "(11) 99999-9999",
+    "cidade": "Porto Feliz - SP"
+   },
+   "criador": {
+    "nome": "Haras Toro Leo",
+    "cidade": "Porto Feliz - SP"
+   },
+   "pai": {
+    "nome": "Toro Leo",
+    "registro": "ABQM 210.998",
+    "pelagem": "Castanha",
+    "pai": {
+     "nome": "Doc Bar",
+     "registro": "ABQM 102.334",
+     "pelagem": "Alazã"
+    },
+    "mae": {
+     "nome": "Miss Holly Bee",
+     "registro": "AQHA 445.210",
+     "pelagem": "Castanha"
+    }
+   },
+   "mae": {
+    "nome": "Badger Star",
+    "registro": "ABQM 265.447",
+    "pelagem": "Tordilha",
+    "pai": {
+     "nome": "Grey Badger II",
+     "registro": "AQHA 221.905",
+     "pelagem": "Tordilha"
+    },
+    "mae": {
+     "nome": "Freckles Lady",
+     "registro": "AQHA 338.441",
+     "pelagem": "Castanha"
+    }
+   },
+   "fotoPerfil": "assets/img/p5.jpg",
+   "midias": [],
+   "provas": [],
+   "principal": false
+  },
+  {
+   "id": "relampago-star",
+   "nome": "RELÂMPAGO STAR",
+   "registro": "P355902",
+   "sexo": "macho",
+   "nascimento": "2016-06-25T00:00:00.000",
+   "pelagem": "Baio",
+   "raca": "Quarto de Milha",
+   "altura": "1,55 m",
+   "peso": "530 kg",
+   "descricao": "Animal do plantel do Fazenda Santa Helena, mantido no mesmo manejo e acompanhamento sanitário do haras.",
+   "proprietario": {
+    "nome": "João da Silva",
+    "fazenda": "Fazenda Santa Helena",
+    "telefone": "(11) 99999-9999",
+    "cidade": "Porto Feliz - SP"
+   },
+   "criador": {
+    "nome": "Haras Toro Leo",
+    "cidade": "Porto Feliz - SP"
+   },
+   "pai": {
+    "nome": "Toro Leo",
+    "registro": "ABQM 210.998",
+    "pelagem": "Castanha",
+    "pai": {
+     "nome": "Doc Bar",
+     "registro": "ABQM 102.334",
+     "pelagem": "Alazã"
+    },
+    "mae": {
+     "nome": "Miss Holly Bee",
+     "registro": "AQHA 445.210",
+     "pelagem": "Castanha"
+    }
+   },
+   "mae": {
+    "nome": "Badger Star",
+    "registro": "ABQM 265.447",
+    "pelagem": "Tordilha",
+    "pai": {
+     "nome": "Grey Badger II",
+     "registro": "AQHA 221.905",
+     "pelagem": "Tordilha"
+    },
+    "mae": {
+     "nome": "Freckles Lady",
+     "registro": "AQHA 338.441",
+     "pelagem": "Castanha"
+    }
+   },
+   "fotoPerfil": "assets/img/p7.jpg",
+   "midias": [],
+   "provas": [],
+   "principal": false
+  },
+  {
+   "id": "boneca-freckles",
+   "nome": "BONECA FRECKLES",
+   "registro": "P298441",
+   "sexo": "femea",
+   "nascimento": "2020-01-18T00:00:00.000",
+   "pelagem": "Castanho",
+   "raca": "Quarto de Milha",
+   "altura": "1,47 m",
+   "peso": "465 kg",
+   "descricao": "Animal do plantel do Fazenda Santa Helena, mantido no mesmo manejo e acompanhamento sanitário do haras.",
+   "proprietario": {
+    "nome": "João da Silva",
+    "fazenda": "Fazenda Santa Helena",
+    "telefone": "(11) 99999-9999",
+    "cidade": "Porto Feliz - SP"
+   },
+   "criador": {
+    "nome": "Haras Toro Leo",
+    "cidade": "Porto Feliz - SP"
+   },
+   "pai": {
+    "nome": "Toro Leo",
+    "registro": "ABQM 210.998",
+    "pelagem": "Castanha",
+    "pai": {
+     "nome": "Doc Bar",
+     "registro": "ABQM 102.334",
+     "pelagem": "Alazã"
+    },
+    "mae": {
+     "nome": "Miss Holly Bee",
+     "registro": "AQHA 445.210",
+     "pelagem": "Castanha"
+    }
+   },
+   "mae": {
+    "nome": "Badger Star",
+    "registro": "ABQM 265.447",
+    "pelagem": "Tordilha",
+    "pai": {
+     "nome": "Grey Badger II",
+     "registro": "AQHA 221.905",
+     "pelagem": "Tordilha"
+    },
+    "mae": {
+     "nome": "Freckles Lady",
+     "registro": "AQHA 338.441",
+     "pelagem": "Castanha"
+    }
+   },
+   "fotoPerfil": "assets/img/p3.jpg",
+   "midias": [],
+   "provas": [],
+   "principal": false
+  },
+  {
+   "id": "isabel-toro-leo",
+   "nome": "ISABEL TORO LEO",
+   "registro": "P341234",
+   "sexo": "femea",
+   "nascimento": "2018-08-18T00:00:00.000",
+   "pelagem": "Castanho",
+   "raca": "Quarto de Milha",
+   "altura": "1,52 m",
+   "peso": "520 kg",
+   "descricao": "Égua de excepcional habilidade em provas de velocidade. Filha de LEO DO VALE, campeão de três tambores, e neta de TORO LEO. Possui temperamento equilibrado, andamento regular e ótima resposta ao treinamento, características típicas da linhagem Quarter Horse de velocidade.",
+   "proprietario": {
+    "nome": "João da Silva",
+    "fazenda": "Fazenda Santa Helena",
+    "telefone": "(11) 99999-9999",
+    "cidade": "Porto Feliz - SP"
+   },
+   "criador": {
+    "nome": "Haras Toro Leo",
+    "cidade": "Porto Feliz - SP"
+   },
+   "pai": {
+    "nome": "LEO DO VALE",
+    "registro": "ABQM 341.880",
+    "pelagem": "Castanha",
+    "pai": {
+     "nome": "Toro Leo",
+     "registro": "ABQM 210.998",
+     "pelagem": "Castanha",
+     "pai": {
+      "nome": "Doc Bar",
+      "registro": "ABQM 102.334",
+      "pelagem": "Alazã"
+     },
+     "mae": {
+      "nome": "Miss Holly Bee",
+      "registro": "AQHA 445.210",
+      "pelagem": "Castanha"
+     }
+    },
+    "mae": {
+     "nome": "Freckles Sugar",
+     "registro": "ABQM 233.104",
+     "pelagem": "Alazã",
+     "pai": {
+      "nome": "Peppy San Badger",
+      "registro": "AQHA 1974.512",
+      "pelagem": "Alazã"
+     },
+     "mae": {
+      "nome": "Sugar Badger",
+      "registro": "AQHA 512.887",
+      "pelagem": "Castanha"
+     }
+    }
+   },
+   "mae": {
+    "nome": "FLOR DA SERRA",
+    "registro": "ABQM 322.715",
+    "pelagem": "Alazã",
+    "pai": {
+     "nome": "Badger Star",
+     "registro": "ABQM 265.447",
+     "pelagem": "Tordilha",
+     "pai": {
+      "nome": "Grey Badger II",
+      "registro": "AQHA 221.905",
+      "pelagem": "Tordilha"
+     },
+     "mae": {
+      "nome": "Freckles Lady",
+      "registro": "AQHA 338.441",
+      "pelagem": "Castanha"
+     }
+    },
+    "mae": {
+     "nome": "Crystal Bandit",
+     "registro": "ABQM 277.913",
+     "pelagem": "Castanha",
+     "pai": {
+      "nome": "Freckles Bandit",
+      "registro": "AQHA 188.220",
+      "pelagem": "Alazã"
+     },
+     "mae": {
+      "nome": "Bandit Joy",
+      "registro": "AQHA 402.118",
+      "pelagem": "Baia"
+     }
+    }
+   },
+   "fotoPerfil": "assets/img/hero.jpg",
+   "midias": [
+    {
+     "id": "m1",
+     "tipo": "foto",
+     "arquivo": "assets/img/hero.jpg",
+     "legenda": "Retrato oficial do plantel",
+     "local": "Haras Santa Helena"
+    },
+    {
+     "id": "m2",
+     "tipo": "foto",
+     "arquivo": "assets/img/p2.jpg",
+     "legenda": "Trote de apresentação",
+     "local": "Pista coberta"
+    },
+    {
+     "id": "m3",
+     "tipo": "foto",
+     "arquivo": "assets/img/p3.jpg",
+     "legenda": "Detalhe da cabeça",
+     "local": "Haras Santa Helena"
+    },
+    {
+     "id": "m4",
+     "tipo": "foto",
+     "arquivo": "assets/img/p4.jpg",
+     "legenda": "Alerta no pasto",
+     "local": "Piquete 03"
+    },
+    {
+     "id": "m5",
+     "tipo": "foto",
+     "arquivo": "assets/img/p5.jpg",
+     "legenda": "Perfil de garupa",
+     "local": "Haras Santa Helena"
+    },
+    {
+     "id": "m6",
+     "tipo": "foto",
+     "arquivo": "assets/img/p6.jpg",
+     "legenda": "Treino de rédea",
+     "local": "Pista de areia"
+    },
+    {
+     "id": "m7",
+     "tipo": "foto",
+     "arquivo": "assets/img/p7.jpg",
+     "legenda": "Piquete da manhã",
+     "local": "Piquete 01"
+    },
+    {
+     "id": "m8",
+     "tipo": "foto",
+     "arquivo": "assets/img/p8.jpg",
+     "legenda": "Égua com potro",
+     "local": "Maternidade"
+    },
+    {
+     "id": "m9",
+     "tipo": "foto",
+     "arquivo": "assets/img/p9.jpg",
+     "legenda": "Vista aérea do piquete",
+     "local": "Piquete 02"
+    },
+    {
+     "id": "m10",
+     "tipo": "foto",
+     "arquivo": "assets/img/p10.jpg",
+     "legenda": "Potro curioso",
+     "local": "Maternidade"
+    },
+    {
+     "id": "m11",
+     "tipo": "foto",
+     "arquivo": "assets/img/p11.jpg",
+     "legenda": "Potro no pasto",
+     "local": "Piquete 04"
+    },
+    {
+     "id": "m12",
+     "tipo": "foto",
+     "arquivo": "assets/img/p12.jpg",
+     "legenda": "Revoada no pasto",
+     "local": "Piquete 05"
+    },
+    {
+     "id": "v1",
+     "tipo": "video",
+     "arquivo": "assets/video/treino_tambor.mp4",
+     "legenda": "Treino de três tambores",
+     "duracaoSegundos": 10,
+     "local": "Pista de areia",
+     "poster": "assets/img/act1.jpg"
+    },
+    {
+     "id": "v2",
+     "tipo": "video",
+     "arquivo": "assets/video/passeio_haras.mp4",
+     "legenda": "Passeio pelas instalações",
+     "duracaoSegundos": 8,
+     "local": "Haras Santa Helena",
+     "poster": "assets/img/p6.jpg"
+    },
+    {
+     "id": "v3",
+     "tipo": "video",
+     "arquivo": "assets/video/banho_manejo.mp4",
+     "legenda": "Manejo e banho",
+     "duracaoSegundos": 7,
+     "local": "Tronco de contenção",
+     "poster": "assets/img/act3.jpg"
+    }
+   ],
+   "provas": [
+    {
+     "id": "p1",
+     "data": "2026-09-28T00:00:00.000",
+     "nome": "Três Tambores",
+     "local": "Barretos - SP",
+     "categoria": "Aberta",
+     "colocacao": 1,
+     "tempoSegundos": 16.742,
+     "inscritos": 38,
+     "premiacao": "R$ 4.200,00"
+    },
+    {
+     "id": "p2",
+     "data": "2026-09-14T00:00:00.000",
+     "nome": "Maneabilidade",
+     "local": "Araçatuba - SP",
+     "categoria": "Aberta",
+     "colocacao": 3,
+     "tempoSegundos": 17.108,
+     "inscritos": 25,
+     "premiacao": "R$ 1.100,00"
+    },
+    {
+     "id": "p3",
+     "data": "2026-08-30T00:00:00.000",
+     "nome": "Três Tambores",
+     "local": "Ribeirão Preto - SP",
+     "categoria": "Aberta",
+     "colocacao": 2,
+     "tempoSegundos": 16.905,
+     "inscritos": 41,
+     "premiacao": "R$ 2.300,00"
+    },
+    {
+     "id": "p4",
+     "data": "2026-08-09T00:00:00.000",
+     "nome": "Seis Balizas",
+     "local": "Porto Feliz - SP",
+     "categoria": "Amador",
+     "colocacao": 1,
+     "tempoSegundos": 16.583,
+     "inscritos": 22,
+     "premiacao": "R$ 3.600,00"
+    },
+    {
+     "id": "p5",
+     "data": "2026-07-19T00:00:00.000",
+     "nome": "Ranch Sorting",
+     "local": "Piracicaba - SP",
+     "categoria": "Aberta",
+     "colocacao": 5,
+     "tempoSegundos": 18.24,
+     "inscritos": 30
+    },
+    {
+     "id": "p6",
+     "data": "2026-06-28T00:00:00.000",
+     "nome": "Três Tambores",
+     "local": "São José do Rio Preto - SP",
+     "categoria": "Aberta",
+     "colocacao": 4,
+     "tempoSegundos": 17.402,
+     "inscritos": 36
+    },
+    {
+     "id": "p7",
+     "data": "2026-06-07T00:00:00.000",
+     "nome": "Maneabilidade",
+     "local": "Campinas - SP",
+     "categoria": "Amador",
+     "colocacao": 1,
+     "tempoSegundos": 16.98,
+     "inscritos": 19,
+     "premiacao": "R$ 2.800,00"
+    },
+    {
+     "id": "p8",
+     "data": "2026-05-17T00:00:00.000",
+     "nome": "Seis Balizas",
+     "local": "Indaiatuba - SP",
+     "categoria": "Aberta",
+     "colocacao": 2,
+     "tempoSegundos": 16.874,
+     "inscritos": 27,
+     "premiacao": "R$ 1.900,00"
+    },
+    {
+     "id": "p9",
+     "data": "2026-04-26T00:00:00.000",
+     "nome": "Três Tambores",
+     "local": "Sorocaba - SP",
+     "categoria": "Aberta",
+     "colocacao": 1,
+     "tempoSegundos": 17.01,
+     "inscritos": 33,
+     "premiacao": "R$ 3.100,00"
+    },
+    {
+     "id": "p10",
+     "data": "2026-03-22T00:00:00.000",
+     "nome": "Ranch Sorting",
+     "local": "Bauru - SP",
+     "categoria": "Amador",
+     "colocacao": 6,
+     "tempoSegundos": 18.61,
+     "inscritos": 18
+    },
+    {
+     "id": "p11",
+     "data": "2026-02-15T00:00:00.000",
+     "nome": "Três Tambores",
+     "local": "Lins - SP",
+     "categoria": "Aberta",
+     "colocacao": 2,
+     "tempoSegundos": 17.245,
+     "inscritos": 29,
+     "premiacao": "R$ 1.450,00"
+    },
+    {
+     "id": "p12",
+     "data": "2026-01-25T00:00:00.000",
+     "nome": "Maneabilidade",
+     "local": "Presidente Prudente - SP",
+     "categoria": "Aberta",
+     "colocacao": 1,
+     "tempoSegundos": 17.088,
+     "inscritos": 24,
+     "premiacao": "R$ 2.600,00"
+    }
+   ],
+   "principal": true
+  }
+ ],
+ "baias": [
+  {
+   "numero": "01",
+   "cavaloId": "isabel-toro-leo",
+   "status": "emDia",
+   "ultimaLimpeza": "2026-10-14T06:40:00.000",
+   "manejo": [
+    {
+     "id": "rm1",
+     "tipo": "alimentacao",
+     "descricao": "Ração da manhã",
+     "horario": "06:00",
+     "quantidade": "1,5 kg",
+     "concluida": true,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm2",
+     "tipo": "alimentacao",
+     "descricao": "Feno",
+     "horario": "08:00",
+     "quantidade": "2,0 kg",
+     "concluida": true,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm3",
+     "tipo": "alimentacao",
+     "descricao": "Ração da tarde",
+     "horario": "12:00",
+     "quantidade": "1,5 kg",
+     "concluida": true,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm4",
+     "tipo": "agua",
+     "descricao": "Troca da água",
+     "horario": "14:00",
+     "quantidade": "40 L",
+     "concluida": true,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm5",
+     "tipo": "exercicio",
+     "descricao": "Exercício na guia",
+     "horario": "15:30",
+     "quantidade": "30 min",
+     "concluida": true,
+     "responsavel": "João"
+    },
+    {
+     "id": "rm6",
+     "tipo": "higiene",
+     "descricao": "Limpeza da baia",
+     "horario": "17:00",
+     "quantidade": "1 un.",
+     "concluida": true,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm7",
+     "tipo": "alimentacao",
+     "descricao": "Ração da noite",
+     "horario": "18:00",
+     "quantidade": "1,5 kg",
+     "concluida": false,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm8",
+     "tipo": "saude",
+     "descricao": "Suplemento mineral",
+     "horario": "19:00",
+     "quantidade": "30 g",
+     "concluida": false,
+     "responsavel": "João"
+    }
+   ],
+   "ocorrencias": [
+    {
+     "id": "oc1",
+     "data": "2026-10-03T09:20:00.000",
+     "tipo": "saude",
+     "descricao": "Ferimento leve na canela dianteira esquerda. Curativo aplicado.",
+     "responsavel": "Veterinária Ana Prado",
+     "resolvida": true
+    },
+    {
+     "id": "oc2",
+     "data": "2026-09-12T16:05:00.000",
+     "tipo": "estrutura",
+     "descricao": "Porta da baia com dobradiça solta, ajustada pela manutenção.",
+     "responsavel": "Equipe de manutenção",
+     "resolvida": true
+    },
+    {
+     "id": "oc3",
+     "data": "2026-08-21T07:45:00.000",
+     "tipo": "manejo",
+     "descricao": "Mudança no horário da suplementação aprovada pelo tratador.",
+     "responsavel": "Carlos",
+     "resolvida": false
+    }
+   ],
+   "observacoes": [
+    {
+     "id": "ob1",
+     "data": "2026-10-12T18:30:00.000",
+     "autor": "João da Silva",
+     "texto": "Ajuste na ração da noite: manter 1,5 kg até a prova de novembro. Animal respondendo bem ao aumento de exercício."
+    },
+    {
+     "id": "ob2",
+     "data": "2026-09-29T08:15:00.000",
+     "autor": "Marina",
+     "texto": "Após a prova de Barretos, aplicar gelo por 20 minutos na manhã seguinte."
+    },
+    {
+     "id": "ob3",
+     "data": "2026-09-05T20:10:00.000",
+     "autor": "Veterinária Ana Prado",
+     "texto": "Vermifugação semestral concluída. Retorno previsto para março."
+    }
+   ],
+   "area": "Haras principal"
+  },
+  {
+   "numero": "02",
+   "cavaloId": "tornado-do-vale",
+   "status": "emDia",
+   "ultimaLimpeza": "2026-10-14T06:55:00.000",
+   "manejo": [
+    {
+     "id": "rm1",
+     "tipo": "alimentacao",
+     "descricao": "Ração da manhã",
+     "horario": "06:00",
+     "quantidade": "1,5 kg",
+     "concluida": true,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm2",
+     "tipo": "alimentacao",
+     "descricao": "Feno",
+     "horario": "08:00",
+     "quantidade": "2,0 kg",
+     "concluida": true,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm3",
+     "tipo": "alimentacao",
+     "descricao": "Ração da tarde",
+     "horario": "12:00",
+     "quantidade": "1,5 kg",
+     "concluida": true,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm4",
+     "tipo": "agua",
+     "descricao": "Troca da água",
+     "horario": "14:00",
+     "quantidade": "40 L",
+     "concluida": true,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm5",
+     "tipo": "exercicio",
+     "descricao": "Exercício na guia",
+     "horario": "15:30",
+     "quantidade": "30 min",
+     "concluida": true,
+     "responsavel": "João"
+    },
+    {
+     "id": "rm6",
+     "tipo": "higiene",
+     "descricao": "Limpeza da baia",
+     "horario": "17:00",
+     "quantidade": "1 un.",
+     "concluida": true,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm7",
+     "tipo": "alimentacao",
+     "descricao": "Ração da noite",
+     "horario": "18:00",
+     "quantidade": "1,5 kg",
+     "concluida": false,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm8",
+     "tipo": "saude",
+     "descricao": "Suplemento mineral",
+     "horario": "19:00",
+     "quantidade": "30 g",
+     "concluida": false,
+     "responsavel": "João"
+    }
+   ],
+   "ocorrencias": [
+    {
+     "id": "oc4",
+     "data": "2026-10-01T11:00:00.000",
+     "tipo": "manejo",
+     "descricao": "Apetite reduzido no período da manhã, normalizado à tarde.",
+     "responsavel": "Carlos",
+     "resolvida": true
+    }
+   ],
+   "observacoes": [
+    {
+     "id": "ob4",
+     "data": "2026-10-08T09:00:00.000",
+     "autor": "João da Silva",
+     "texto": "Iniciar condicionamento para a temporada de 2027."
+    }
+   ],
+   "area": "Haras principal"
+  },
+  {
+   "numero": "03",
+   "cavaloId": "luna-badger",
+   "status": "emDia",
+   "ultimaLimpeza": "2026-10-13T17:10:00.000",
+   "manejo": [
+    {
+     "id": "rm1",
+     "tipo": "alimentacao",
+     "descricao": "Ração da manhã",
+     "horario": "06:00",
+     "quantidade": "1,5 kg",
+     "concluida": false,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm2",
+     "tipo": "alimentacao",
+     "descricao": "Feno",
+     "horario": "08:00",
+     "quantidade": "2,0 kg",
+     "concluida": false,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm3",
+     "tipo": "alimentacao",
+     "descricao": "Ração da tarde",
+     "horario": "12:00",
+     "quantidade": "1,5 kg",
+     "concluida": false,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm4",
+     "tipo": "agua",
+     "descricao": "Troca da água",
+     "horario": "14:00",
+     "quantidade": "40 L",
+     "concluida": false,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm5",
+     "tipo": "exercicio",
+     "descricao": "Exercício na guia",
+     "horario": "15:30",
+     "quantidade": "30 min",
+     "concluida": false,
+     "responsavel": "João"
+    },
+    {
+     "id": "rm6",
+     "tipo": "higiene",
+     "descricao": "Limpeza da baia",
+     "horario": "17:00",
+     "quantidade": "1 un.",
+     "concluida": false,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm7",
+     "tipo": "alimentacao",
+     "descricao": "Ração da noite",
+     "horario": "18:00",
+     "quantidade": "1,5 kg",
+     "concluida": false,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm8",
+     "tipo": "saude",
+     "descricao": "Suplemento mineral",
+     "horario": "19:00",
+     "quantidade": "30 g",
+     "concluida": false,
+     "responsavel": "João"
+    }
+   ],
+   "ocorrencias": [],
+   "observacoes": [
+    {
+     "id": "ob5",
+     "data": "2026-09-30T07:30:00.000",
+     "autor": "Marina",
+     "texto": "Égua em descanso após a última prova. Retomar trote leve na próxima semana."
+    }
+   ],
+   "area": "Haras principal"
+  },
+  {
+   "numero": "04",
+   "cavaloId": "relampago-star",
+   "status": "manutencao",
+   "ultimaLimpeza": "2026-10-11T16:20:00.000",
+   "manejo": [
+    {
+     "id": "rm1",
+     "tipo": "alimentacao",
+     "descricao": "Ração da manhã",
+     "horario": "06:00",
+     "quantidade": "1,5 kg",
+     "concluida": false,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm2",
+     "tipo": "alimentacao",
+     "descricao": "Feno",
+     "horario": "08:00",
+     "quantidade": "2,0 kg",
+     "concluida": false,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm3",
+     "tipo": "alimentacao",
+     "descricao": "Ração da tarde",
+     "horario": "12:00",
+     "quantidade": "1,5 kg",
+     "concluida": false,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm4",
+     "tipo": "agua",
+     "descricao": "Troca da água",
+     "horario": "14:00",
+     "quantidade": "40 L",
+     "concluida": false,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm5",
+     "tipo": "exercicio",
+     "descricao": "Exercício na guia",
+     "horario": "15:30",
+     "quantidade": "30 min",
+     "concluida": false,
+     "responsavel": "João"
+    },
+    {
+     "id": "rm6",
+     "tipo": "higiene",
+     "descricao": "Limpeza da baia",
+     "horario": "17:00",
+     "quantidade": "1 un.",
+     "concluida": false,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm7",
+     "tipo": "alimentacao",
+     "descricao": "Ração da noite",
+     "horario": "18:00",
+     "quantidade": "1,5 kg",
+     "concluida": false,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm8",
+     "tipo": "saude",
+     "descricao": "Suplemento mineral",
+     "horario": "19:00",
+     "quantidade": "30 g",
+     "concluida": false,
+     "responsavel": "João"
+    }
+   ],
+   "ocorrencias": [
+    {
+     "id": "oc6",
+     "data": "2026-10-09T14:40:00.000",
+     "tipo": "estrutura",
+     "descricao": "Bebedouro automático com vazamento, aguardando peça de reposição.",
+     "responsavel": "Equipe de manutenção",
+     "resolvida": false
+    },
+    {
+     "id": "oc7",
+     "data": "2026-10-02T10:15:00.000",
+     "tipo": "saude",
+     "descricao": "Casco posterior direito com sensibilidade. Ferrageiro agendado.",
+     "responsavel": "Veterinária Ana Prado",
+     "resolvida": false
+    }
+   ],
+   "observacoes": [
+    {
+     "id": "ob6",
+     "data": "2026-10-10T19:00:00.000",
+     "autor": "João da Silva",
+     "texto": "Priorizar a troca do bebedouro antes da prova de novembro."
+    }
+   ],
+   "area": "Haras principal"
+  },
+  {
+   "numero": "05",
+   "cavaloId": "boneca-freckles",
+   "status": "emDia",
+   "ultimaLimpeza": "2026-10-14T07:05:00.000",
+   "manejo": [
+    {
+     "id": "rm1",
+     "tipo": "alimentacao",
+     "descricao": "Ração da manhã",
+     "horario": "06:00",
+     "quantidade": "1,5 kg",
+     "concluida": true,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm2",
+     "tipo": "alimentacao",
+     "descricao": "Feno",
+     "horario": "08:00",
+     "quantidade": "2,0 kg",
+     "concluida": true,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm3",
+     "tipo": "alimentacao",
+     "descricao": "Ração da tarde",
+     "horario": "12:00",
+     "quantidade": "1,5 kg",
+     "concluida": true,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm4",
+     "tipo": "agua",
+     "descricao": "Troca da água",
+     "horario": "14:00",
+     "quantidade": "40 L",
+     "concluida": true,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm5",
+     "tipo": "exercicio",
+     "descricao": "Exercício na guia",
+     "horario": "15:30",
+     "quantidade": "30 min",
+     "concluida": true,
+     "responsavel": "João"
+    },
+    {
+     "id": "rm6",
+     "tipo": "higiene",
+     "descricao": "Limpeza da baia",
+     "horario": "17:00",
+     "quantidade": "1 un.",
+     "concluida": true,
+     "responsavel": "Carlos"
+    },
+    {
+     "id": "rm7",
+     "tipo": "alimentacao",
+     "descricao": "Ração da noite",
+     "horario": "18:00",
+     "quantidade": "1,5 kg",
+     "concluida": false,
+     "responsavel": "Marina"
+    },
+    {
+     "id": "rm8",
+     "tipo": "saude",
+     "descricao": "Suplemento mineral",
+     "horario": "19:00",
+     "quantidade": "30 g",
+     "concluida": false,
+     "responsavel": "João"
+    }
+   ],
+   "ocorrencias": [],
+   "observacoes": [
+    {
+     "id": "ob7",
+     "data": "2026-10-06T08:20:00.000",
+     "autor": "Carlos",
+     "texto": "Animal tranquilo, mantendo a rotina de manejo sem alterações."
+    }
+   ],
+   "area": "Haras principal"
+  }
+ ]
+}

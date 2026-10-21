@@ -34,10 +34,6 @@ web/.dart_tool/
 Thumbs.db
 desktop.ini
 
-# Dependências Node (o Worker tem package.json próprio)
-node_modules/
-.wrangler/
-
 # Logs e temporários
 *.log
 *.tmp
@@ -47,10 +43,3 @@ __pycache__/
 # Publicação local (o script cria esta pasta com o build do Pages)
 .paginas/
 .paginas2/
-
-# Guia local de ferramentas e credenciais para agentes (não versionar)
-FERRAMENTAS.local.md
-*.local.md
-
-# Repositorio separado (privado) com segredos: nunca versionar aqui.
-infra/
