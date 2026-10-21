@@ -113,11 +113,19 @@ class _TelaBaiasState extends State<TelaBaias> {
   }
 
   Future<void> _adicionarBaia(BuildContext context, Repositorio repositorio) async {
+    // O acervo é a fonte da verdade. Antes, esta lista era fixa no código e
+    // oferecia animais que não existiam mais (e escondia os novos).
     final ocupados = repositorio.baias.map((b) => b.cavaloId).toSet();
-    final disponiveis = _plantel.where((c) => !ocupados.contains(c.id)).toList();
+    final disponiveis = repositorio.cavalos.where((c) => !ocupados.contains(c.id)).toList();
     if (disponiveis.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Todos os animais do plantel já possuem baia.')),
+        SnackBar(
+          content: Text(
+            repositorio.cavalos.isEmpty
+                ? 'Cadastre um animal antes de criar a baia.'
+                : 'Todos os animais do plantel já possuem baia.',
+          ),
+        ),
       );
       return;
     }
@@ -183,16 +191,6 @@ class _TelaBaiasState extends State<TelaBaias> {
     );
   }
 }
-
-const _plantel = <({String id, String nome})>[
-  (id: 'isabel-toro-leo', nome: 'ISABEL TORO LEO'),
-  (id: 'tornado-do-vale', nome: 'TORNADO DO VALE'),
-  (id: 'luna-badger', nome: 'LUNA BADGER'),
-  (id: 'relampago-star', nome: 'RELÂMPAGO STAR'),
-  (id: 'boneca-freckles', nome: 'BONECA FRECKLES'),
-  (id: 'estrela-guia', nome: 'ESTRELA GUIA'),
-  (id: 'vento-norte', nome: 'VENTO NORTE'),
-];
 
 /// Aba "Baias": lista das baias com animal, situação e ações.
 class _AbaBaias extends StatelessWidget {

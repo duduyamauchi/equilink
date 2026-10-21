@@ -1,0 +1,8 @@
+Remove a lista fixa de animais do diálogo de nova baia
+
+O diálogo "Nova baia" montava as opções a partir de uma constante no código com
+sete nomes. Ela oferecia animais que não existiam mais no acervo
+("ESTRELA GUIA", "VENTO NORTE") e escondia os cadastrados depois — inclusive os
+que o assistente acabou de criar.
+
+A lista passa a vir de `repositorio.cavalos`, filtrando quem já tem baia.

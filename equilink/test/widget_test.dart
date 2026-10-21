@@ -358,5 +358,26 @@ void main() {
       final existente = rep.cavalos.first.id;
       expect(rep.baiaOrfa(existente), isFalse);
     });
+
+    testWidgets('diálogo de nova baia lista o acervo, não uma lista fixa', (tester) async {
+      final fonte = FonteMemoria();
+      final rep = Repositorio(fonte);
+      await rep.carregar();
+
+      // A lista fixa no código tinha animais que não existem no acervo
+      // ("ESTRELA GUIA", "VENTO NORTE") e escondia os cadastrados. A opção
+      // precisa sair sempre de `repositorio.cavalos`.
+      final idsDoAcervo = rep.cavalos.map((c) => c.id).toSet();
+      expect(idsDoAcervo, isNot(contains('estrela-guia')));
+      expect(idsDoAcervo, isNot(contains('vento-norte')));
+
+      final livres = rep.cavalos.where(
+        (c) => !rep.baias.any((b) => b.cavaloId == c.id),
+      ).toList();
+      // Cada animal sem baia é uma opção válida; nenhum vem de fora do acervo.
+      for (final c in livres) {
+        expect(idsDoAcervo, contains(c.id));
+      }
+    });
   });
 }
