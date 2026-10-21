@@ -1,5 +1,5 @@
 {
-  "name": "quarto-api",
+  "name": "equilink-api",
   "main": "src/index.js",
   "compatibility_date": "2026-10-20",
   "observability": { "enabled": true },
@@ -9,6 +9,6 @@
     // Haras usado pelo token de serviço (sincronização/migração).
     "HARAS_ID": "00000000-0000-0000-0000-000000000001",
     // Origens que podem chamar a API com cookie. Allowlist exata, sem curinga.
-    "ORIGENS_PERMITIDAS": "https://quarto-de-milha.quarto-de-milha.workers.dev,https://quarto-admin.quarto-de-milha.workers.dev,http://localhost:8080,http://127.0.0.1:8080"
+    "ORIGENS_PERMITIDAS": "https://equilink.quarto-de-milha.workers.dev,https://equilink-admin.quarto-de-milha.workers.dev,http://localhost:8080,http://127.0.0.1:8080"
   }
 }

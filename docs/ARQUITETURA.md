@@ -1,4 +1,4 @@
-# Quarto de Milha — arquitetura
+# EquiLink — arquitetura
 
 Dois aplicativos Flutter Web e um pacote compartilhado. O app do usuário consulta
 o acervo; o painel administrativo edita. Ambos falam com a **mesma** `FonteDeDados`,
@@ -6,9 +6,9 @@ então trocar mock por banco de dados é trocar uma implementação.
 
 ```
 horse-igor/
-├── pacotes/quarto_core/     modelos, contrato de fonte, sessão e fachada (sem UI)
-├── quarto_de_milha/         aplicativo do usuário + proxy /api (web, Android, iOS)
-├── quarto_admin/            painel administrativo + proxy /api (web)
+├── pacotes/equilink_core/     modelos, contrato de fonte, sessão e fachada (sem UI)
+├── equilink/         aplicativo do usuário + proxy /api (web, Android, iOS)
+├── equilink_admin/            painel administrativo + proxy /api (web)
 ├── workers/api/             API sobre o Neon (auth, validação, autorização)
 └── deploy/                  schema.sql e migração de segurança
 ```
@@ -18,15 +18,15 @@ horse-igor/
 ```mermaid
 flowchart LR
   subgraph Apps
-    U["quarto_de_milha<br/>(usuário)"]
-    A["quarto_admin<br/>(painel)"]
+    U["equilink<br/>(usuário)"]
+    A["equilink_admin<br/>(painel)"]
   end
   R["Repositorio<br/>(fachada + estado)"]
   F{{"FonteDeDados"}}
   M["FonteMemoria<br/>(demonstração e testes)"]
   H["FonteHttp"]
   P["Proxy /api<br/>(mesma origem)"]
-  D["quarto-api<br/>(Worker)"]
+  D["equilink-api<br/>(Worker)"]
   N[("Postgres<br/>Neon")]
 
   U --> R
@@ -100,20 +100,20 @@ flutter build web --release
 
 # Backend real
 flutter build web --release \
-  --dart-define=QUARTO_FONTE=http \
-  --dart-define=QUARTO_API=https://api.seu-haras.app \
-  --dart-define=QUARTO_TOKEN=seu-token
+  --dart-define=EQUILINK_FONTE=http \
+  --dart-define=EQUILINK_API=https://api.seu-haras.app \
+  --dart-define=EQUILINK_TOKEN=seu-token
 
 # Endereço exibido no QR Code da placa
---dart-define=QUARTO_SITE=https://seu-dominio.app
+--dart-define=EQUILINK_SITE=https://seu-dominio.app
 ```
 
 | Define | Padrão | Uso |
 | --- | --- | --- |
-| `QUARTO_FONTE` | `memoria` | `memoria` ou `http` |
-| `QUARTO_API` | vazio | raiz da API (obrigatório com `http`) |
-| `QUARTO_TOKEN` | vazio | enviado como `Authorization: Bearer …` |
-| `QUARTO_SITE` | `https://quartodemilha.app.br` | base do link no QR Code |
+| `EQUILINK_FONTE` | `memoria` | `memoria` ou `http` |
+| `EQUILINK_API` | vazio | raiz da API (obrigatório com `http`) |
+| `EQUILINK_TOKEN` | vazio | enviado como `Authorization: Bearer …` |
+| `EQUILINK_SITE` | `https://equilink.app.br` | base do link no QR Code |
 
 ## O que o backend precisa implementar
 
@@ -136,25 +136,25 @@ O painel tem a tela **Fonte de dados**, que:
 1. **Exporta** o acervo atual em JSON (copiar ou visualizar).
 2. **Importa** um JSON colado, substituindo todo o acervo e gravando na fonte ativa.
 
-Fluxo típico: rode com `QUARTO_FONTE=memoria`, exporte, suba o backend, rode com
+Fluxo típico: rode com `EQUILINK_FONTE=memoria`, exporte, suba o backend, rode com
 `http`, importe o mesmo JSON. Nenhum arquivo intermediário.
 
 ## Verificação
 
 ```bash
-cd pacotes/quarto_core && flutter test   # contrato, serialização, regras
-cd quarto_de_milha       && flutter test   # telas do usuário
-cd quarto_admin          && flutter test   # telas do painel
+cd pacotes/equilink_core && flutter test   # contrato, serialização, regras
+cd equilink       && flutter test   # telas do usuário
+cd equilink_admin          && flutter test   # telas do painel
 ```
 
 ## Executar localmente
 
 ```bash
 # Painel administrativo
-cd quarto_admin && flutter run -d chrome
+cd equilink_admin && flutter run -d chrome
 
 # Aplicativo do usuário
-cd quarto_de_milha && flutter run -d chrome
+cd equilink && flutter run -d chrome
 ```
 
 Para builds locais servidos por HTTP, use `ferramentas/servir.py` na raiz.
@@ -237,11 +237,11 @@ flowchart LR
 Os três coletores prontos, escolhidos por compilação:
 
 ```bash
---dart-define=QUARTO_ANALYTICS=memoria   # padrão: guarda na sessão
---dart-define=QUARTO_ANALYTICS=console   # imprime no console
---dart-define=QUARTO_ANALYTICS=nulo      # desliga
---dart-define=QUARTO_ANALYTICS=http \
-  --dart-define=QUARTO_API_EVENTOS=https://api.haras.app
+--dart-define=EQUILINK_ANALYTICS=memoria   # padrão: guarda na sessão
+--dart-define=EQUILINK_ANALYTICS=console   # imprime no console
+--dart-define=EQUILINK_ANALYTICS=nulo      # desliga
+--dart-define=EQUILINK_ANALYTICS=http \
+  --dart-define=EQUILINK_API_EVENTOS=https://api.haras.app
 ```
 
 `ColetorComposto` permite gravar em memória **e** enviar para a API ao mesmo tempo.
@@ -293,5 +293,5 @@ Hoje, sem backend de eventos, há dois caminhos:
 1. **Importar JSON** — a aba Origem exporta os eventos; a tela Analytics do painel
    importa o mesmo JSON (aceita `{"eventos": […]}` ou uma lista solta).
 2. **Apontar os dois para o mesmo serviço** — compile ambos com
-   `QUARTO_ANALYTICS=http` e `QUARTO_API_EVENTOS`. O contrato do serviço é uma
+   `EQUILINK_ANALYTICS=http` e `EQUILINK_API_EVENTOS`. O contrato do serviço é uma
    rota: `POST /eventos` recebendo `{"eventos": [Evento, ...]}`.

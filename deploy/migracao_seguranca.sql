@@ -1,4 +1,4 @@
--- Quarto de Milha — autenticação e controle de acesso
+-- EquiLink — autenticação e controle de acesso
 --
 -- Idempotente: pode rodar mais de uma vez.
 --

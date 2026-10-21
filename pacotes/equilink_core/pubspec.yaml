@@ -1,0 +1,18 @@
+name: equilink_core
+description: "Núcleo compartilhado do EquiLink: modelos de domínio e contrato de fonte de dados."
+version: 1.0.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.5.0
+  postgres: ^3.5.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

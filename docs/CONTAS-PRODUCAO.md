@@ -9,7 +9,7 @@ criado de novo.
 
 | Serviço | Estado |
 | --- | --- |
-| **GitHub** (`duduyamauchi`) | conta ativa; repositório `quarto-de-milha` com a branch de código e o `gh-pages` |
+| **GitHub** (`duduyamauchi`) | conta ativa; repositório `equilink` com a branch de código e o `gh-pages` |
 | Token de API do GitHub | existe, mas **deve ser revogado e recriado** (ver §5) |
 
 ---

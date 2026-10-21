@@ -1,6 +1,6 @@
 # Plataforma de hospedagem — recomendação
 
-Pergunta: onde colocar o Quarto de Milha para servir clientes reais.
+Pergunta: onde colocar o EquiLink para servir clientes reais.
 
 Resposta curta: **Cloudflare Pages (apps) + Neon em São Paulo (banco e login) +
 Cloudflare R2 (arquivos) — US$ 0 para começar.** Ao ter clientes pagantes, migre o

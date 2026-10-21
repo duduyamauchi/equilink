@@ -1,13 +1,13 @@
-# Quarto de Milha
+# EquiLink
 
 Sistema de gestão e identidade digital para haras de cavalos Quarto de Milha, em
 português do Brasil. Três projetos, um núcleo compartilhado.
 
 | Projeto | O que é | Plataformas |
 | --- | --- | --- |
-| [`quarto_de_milha`](quarto_de_milha/) | Aplicativo do usuário: perfil, genealogia, histórico esportivo, galeria e baias | Web, Android, iOS |
-| [`quarto_admin`](quarto_admin/) | Painel administrativo: CRUD do acervo, indicadores, **analytics** e inspeção da fonte | Web |
-| [`pacotes/quarto_core`](pacotes/quarto_core/) | Modelos, contrato de fonte de dados e fachada usada pelos dois apps | — |
+| [`equilink`](equilink/) | Aplicativo do usuário: perfil, genealogia, histórico esportivo, galeria e baias | Web, Android, iOS |
+| [`equilink_admin`](equilink_admin/) | Painel administrativo: CRUD do acervo, indicadores, **analytics** e inspeção da fonte | Web |
+| [`pacotes/equilink_core`](pacotes/equilink_core/) | Modelos, contrato de fonte de dados e fachada usada pelos dois apps | — |
 
 ## Por onde começar
 
@@ -21,9 +21,9 @@ português do Brasil. Três projetos, um núcleo compartilhado.
 
 | Recurso | URL |
 | --- | --- |
-| App do usuário | https://quarto-de-milha.quarto-de-milha.workers.dev |
-| Painel administrativo | https://quarto-admin.quarto-de-milha.workers.dev |
-| API (ponte app ↔ Neon) | https://quarto-api.quarto-de-milha.workers.dev |
+| App do usuário | https://equilink.quarto-de-milha.workers.dev |
+| Painel administrativo | https://equilink-admin.quarto-de-milha.workers.dev |
+| API (ponte app ↔ Neon) | https://equilink-api.quarto-de-milha.workers.dev |
 
 O acervo vive num Postgres no Neon e os dois apps o consomem pela API, sempre
 pelo proxy `/api` do próprio host. Sem argumentos de build, ambos usam a fonte
@@ -53,7 +53,7 @@ Detalhes e o porquê de cada escolha em
 ### Por que existe uma API
 
 Flutter Web não abre conexão TCP: falar com o Postgres direto do navegador é
-impossível e exporia a credencial do banco. O Worker `quarto-api` é a ponte —
+impossível e exporia a credencial do banco. O Worker `equilink-api` é a ponte —
 HTTP do navegador, driver serverless para o banco. O app usa a `FonteHttp` que já
 existia; nenhuma tela precisou mudar.
 
@@ -66,7 +66,7 @@ sobrescrevem mais. `salvar(acervo)` continua existindo como fallback para fontes
 que não suportam escrita granular.
 
 Para apontar para um backend, compile com
-`--dart-define=QUARTO_FONTE=http --dart-define=QUARTO_API=<endereço>`.
+`--dart-define=EQUILINK_FONTE=http --dart-define=EQUILINK_API=<endereço>`.
 
 ## Analytics
 

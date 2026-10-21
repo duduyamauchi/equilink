@@ -7,8 +7,8 @@ Uso:
     python ferramentas/servir.py usuario    # somente o aplicativo do usuário
 
 Para apontar para um backend em vez dos dados de demonstração:
-    set QUARTO_FONTE=http
-    set QUARTO_API=https://api.exemplo.app
+    set EQUILINK_FONTE=http
+    set EQUILINK_API=https://api.exemplo.app
     python ferramentas/servir.py
 
 Feito em Python para funcionar igual no Windows (cmd/PowerShell/Git Bash) e no
@@ -30,14 +30,14 @@ RAIZ = Path(__file__).resolve().parent.parent
 
 APLICATIVOS = {
     "admin": {
-        "projeto": "quarto_admin",
+        "projeto": "equilink_admin",
         "base": "/",
         "porta": 8100,
         "rotulo": "painel administrativo",
     },
     "usuario": {
-        "projeto": "quarto_de_milha",
-        "base": "/quarto-de-milha/",
+        "projeto": "equilink",
+        "base": "/equilink/",
         "porta": 8099,
         "rotulo": "aplicativo do usuário",
     },
@@ -47,7 +47,7 @@ APLICATIVOS = {
 def defines() -> list[str]:
     """Repassa a configuração de fonte para o build, quando definida."""
     argumentos = []
-    for chave in ("QUARTO_FONTE", "QUARTO_API", "QUARTO_TOKEN", "QUARTO_SITE"):
+    for chave in ("EQUILINK_FONTE", "EQUILINK_API", "EQUILINK_TOKEN", "EQUILINK_SITE"):
         valor = os.environ.get(chave)
         if valor:
             argumentos.append(f"--dart-define={chave}={valor}")

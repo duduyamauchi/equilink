@@ -95,10 +95,10 @@ seria adivinhação.
 
 | Ação | Ganho |
 | --- | --- |
-| Mover `formatos.dart` para `quarto_core` (já é código puro) | remove 127 linhas duplicadas |
+| Mover `formatos.dart` para `equilink_core` (já é código puro) | remove 127 linhas duplicadas |
 | `Analise.maiorValor` / `menorValor` no núcleo | remove lógica de 3 telas |
 | Constante `Midia.fallbackImagem` no núcleo | remove 6 strings mágicas |
-| Extrair `quarto_ui` com **primitivas neutras**: espaçamento, raios, `Painel`, `Vazio`, `Campo`, `Etiqueta` recebendo cores por parâmetro | elimina ~250 linhas duplicadas sem unificar a identidade visual |
+| Extrair `equilink_ui` com **primitivas neutras**: espaçamento, raios, `Painel`, `Vazio`, `Campo`, `Etiqueta` recebendo cores por parâmetro | elimina ~250 linhas duplicadas sem unificar a identidade visual |
 
 > O truque para não engessar o design: o widget base aceita a paleta; cada app
 > injeta a sua. Estrutura compartilhada, aparência independente.
@@ -125,7 +125,7 @@ pacotes/
 ├── quarto_dominio/      modelos + regras
 ├── quarto_dados/        fontes + repositório
 ├── quarto_analytics/    eventos + coletores + análise
-└── quarto_ui/           primitivas visuais
+└── equilink_ui/           primitivas visuais
 ```
 
 **Não fazer isso agora.** Um pacote por camada, com um produto só, adiciona
@@ -158,19 +158,19 @@ o backend terá de tocar.
 
 | Ação | Resultado |
 | --- | --- |
-| `formatos.dart` movido para `quarto_core` | 127 linhas duplicadas removidas; 2 cópias → 1 |
+| `formatos.dart` movido para `equilink_core` | 127 linhas duplicadas removidas; 2 cópias → 1 |
 | `Analise.maiorValor` / `menorValor` / `normalizar` | 7 `reduce` espalhados em telas substituídos |
 | `MidiaPadrao.imagem` / `capaVideo` no núcleo | 6 strings mágicas de asset removidas |
-| Pacote `quarto_ui` com primitivas neutras | `Painel`, `Etiqueta`, `Vazio`, `Campo`, `Secao` compartilhados |
+| Pacote `equilink_ui` com primitivas neutras | `Painel`, `Etiqueta`, `Vazio`, `Campo`, `Secao` compartilhados |
 | `PaletaUi` + `EscopoUi` | cada app injeta a sua paleta; identidade visual preservada |
 
 ### Números
 
 | Arquivo | Antes | Depois |
 | --- | --- | --- |
-| `quarto_de_milha/lib/widgets/comuns.dart` | 569 | 538 |
-| `quarto_admin/lib/widgets/comuns.dart` | 316 | 227 |
-| `pacotes/quarto_ui/lib` | — | 338 (novo, compartilhado) |
+| `equilink/lib/widgets/comuns.dart` | 569 | 538 |
+| `equilink_admin/lib/widgets/comuns.dart` | 316 | 227 |
+| `pacotes/equilink_ui/lib` | — | 338 (novo, compartilhado) |
 
 A contagem bruta não cai muito porque o código mudou de lugar — mas a **duplicação
 caiu**: `Painel`, `Etiqueta`, `Vazio` e `Campo` agora existem uma vez, e cada app

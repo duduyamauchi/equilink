@@ -1,4 +1,4 @@
-// API do Quarto de Milha — roda na Cloudflare Workers e fala com o Neon.
+// API do EquiLink — roda na Cloudflare Workers e fala com o Neon.
 //
 // Por que existe: o app é Flutter Web, que não abre conexão TCP. Falar com o
 // Postgres direto do navegador é impossível (e exporia credenciais). Esta API
@@ -46,8 +46,8 @@ import {
 const ORIGENS_PERMITIDAS = (env) =>
   (env.ORIGENS_PERMITIDAS ??
     [
-      'https://quarto-de-milha.quarto-de-milha.workers.dev',
-      'https://quarto-admin.quarto-de-milha.workers.dev',
+      'https://equilink.quarto-de-milha.workers.dev',
+      'https://equilink-admin.quarto-de-milha.workers.dev',
       'http://localhost:8080',
       'http://127.0.0.1:8080',
     ].join(','))
@@ -356,7 +356,7 @@ async function gravarCavalo(sql, harasId, c) {
                          altura, peso, descricao, foto_perfil, principal, proprietario,
                          criador, pai, mae, sgpe_url, atualizado_em)
     values (${c.id}, ${harasId}, ${c.nome}, ${c.registro}, ${c.sexo}, ${c.nascimento},
-            ${c.pelagem ?? ''}, ${c.raca ?? 'Quarto de Milha'}, ${c.altura ?? ''},
+            ${c.pelagem ?? ''}, ${c.raca ?? 'EquiLink'}, ${c.altura ?? ''},
             ${c.peso ?? ''}, ${c.descricao ?? ''}, ${c.fotoPerfil ?? ''},
             ${c.principal ?? false}, ${JSON.stringify(c.proprietario ?? {})}::jsonb,
             ${JSON.stringify(c.criador ?? {})}::jsonb, ${JSON.stringify(c.pai ?? {})}::jsonb,
@@ -492,7 +492,7 @@ async function gravarAcervoEmLote(sql, harasId, acervo) {
       ${cavalos.map((c) => c.sexo ?? 'femea')}::text[],
       ${cavalos.map((c) => c.nascimento)}::text[],
       ${cavalos.map((c) => c.pelagem ?? '')}::text[],
-      ${cavalos.map((c) => c.raca ?? 'Quarto de Milha')}::text[],
+      ${cavalos.map((c) => c.raca ?? 'EquiLink')}::text[],
       ${cavalos.map((c) => c.altura ?? '')}::text[],
       ${cavalos.map((c) => c.peso ?? '')}::text[],
       ${cavalos.map((c) => c.descricao ?? '')}::text[],
@@ -993,7 +993,7 @@ function normalizarCavalo(bruto, idForcado) {
     sexo,
     nascimento: dataIso(c.nascimento, 'nascimento', { obrigatorio: true }),
     pelagem: texto(c.pelagem, 'pelagem', { max: 60 }),
-    raca: texto(c.raca, 'raca', { max: 60, padrao: 'Quarto de Milha' }),
+    raca: texto(c.raca, 'raca', { max: 60, padrao: 'EquiLink' }),
     altura: texto(c.altura, 'altura', { max: 20 }),
     peso: texto(c.peso, 'peso', { max: 20 }),
     descricao: texto(c.descricao, 'descricao', { max: 4000 }),

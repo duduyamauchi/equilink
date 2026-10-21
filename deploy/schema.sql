@@ -1,4 +1,4 @@
--- Quarto de Milha — schema inicial
+-- EquiLink — schema inicial
 --
 -- Objetivo: sair do acervo em memória para um banco relacional com acesso por
 -- proprietário. A regra central: o perfil público (fotos, genealogia, histórico)
@@ -42,7 +42,7 @@ create table if not exists cavalos (
   sexo          text not null check (sexo in ('femea', 'macho')),
   nascimento    date not null,
   pelagem       text not null default '',
-  raca          text not null default 'Quarto de Milha',
+  raca          text not null default 'EquiLink',
   altura        text not null default '',
   peso          text not null default '',
   descricao     text not null default '',

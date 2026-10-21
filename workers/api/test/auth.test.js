@@ -108,7 +108,7 @@ test('logout gera cookie vencido', async () => {
 });
 
 test('leitura de cookie ignora outros pares', () => {
-  assert.equal(lerCookie('a=1; qdm_sessao=valor; b=2'), 'valor');
+  assert.equal(lerCookie('a=1; equilink_sessao=valor; b=2'), 'valor');
   assert.equal(lerCookie('outro=1'), null);
   assert.equal(lerCookie(null), null);
 });

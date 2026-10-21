@@ -13,7 +13,7 @@
 // O que NÃO se faz aqui: guardar segredo no bundle. `--dart-define` vai para o
 // JavaScript publicado — serve para configuração pública, nunca para segredo.
 
-const NOME_COOKIE = 'qdm_sessao';
+const NOME_COOKIE = 'equilink_sessao';
 const VALIDADE_SESSAO = 60 * 60 * 8; // 8 horas
 // O runtime da Cloudflare recusa PBKDF2 acima de 100 mil iterações
 // ("Pbkdf2 failed: iteration counts above 100000 are not supported"), então
