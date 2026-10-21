@@ -853,6 +853,47 @@ export default {
       }
 
       // POST /eventos — lote de analytics (público: telemetria do app)
+      // GET /eventos — telemetria gravada, para o painel de analytics.
+      //
+      // Só quem administra o haras lê: os eventos trazem navegação e ações de
+      // usuários identificados. Sem este endpoint, o painel mostrava apenas a
+      // sessão local e os eventos enviados pelo app ficavam invisíveis no banco.
+      if (partes[0] === 'eventos' && request.method === 'GET') {
+        if (!autenticado) {
+          return erro('Autenticação necessária para ler a telemetria.', 401, { cabecalhos: base });
+        }
+        const limite = inteiro(url.searchParams.get('limite'), 'limite', {
+          min: 1,
+          max: 5000,
+          padrao: 1000,
+        });
+        const linhas = await sql`
+          select nome, quando, sessao, usuario, tela, entidade, entidade_id,
+                 valor, propriedades
+          from eventos_analiticos
+          where haras_id = ${acesso.harasId}
+          order by quando desc
+          limit ${limite}
+        `;
+        return json(
+          {
+            eventos: linhas.map((l) => ({
+              nome: l.nome,
+              quando: l.quando instanceof Date ? l.quando.toISOString() : l.quando,
+              sessao: l.sessao,
+              usuario: l.usuario ?? null,
+              tela: l.tela ?? null,
+              entidade: l.entidade ?? null,
+              entidadeId: l.entidade_id ?? null,
+              valor: l.valor == null ? null : Number(l.valor),
+              propriedades: l.propriedades ?? {},
+            })),
+          },
+          200,
+          { cabecalhos: base },
+        );
+      }
+
       if (partes[0] === 'eventos' && request.method === 'POST') {
         const corpo = await lerJson(request);
         const lista = listaDe(corpo.eventos, 'eventos');

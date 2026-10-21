@@ -86,6 +86,26 @@ class _PainelAppState extends State<PainelApp> {
     }
     setState(() => _sessao = sessao);
     _repositorio.carregar();
+    _carregarTelemetria();
+  }
+
+  /// Traz os eventos gravados no backend.
+  ///
+  /// O aplicativo envia telemetria para o banco; sem esta leitura o painel
+  /// mostrava só o que aconteceu naquela sessão do navegador.
+  Future<void> _carregarTelemetria() async {
+    final api = Ambiente.api;
+    if (api.isEmpty) return;
+    await _analytics.carregarDe(
+      () => buscarEventosNaApi(
+        base: api,
+        cabecalhos: Ambiente.token.isEmpty
+            ? const {}
+            : {'Authorization': 'Bearer ${Ambiente.token}'},
+      ),
+      rotulo: 'API (${Ambiente.api})',
+    );
+    // `total` fica no rótulo de origem montado por carregarDe.
   }
 
   /// Chamado quando a FonteHttp recebe 401: a sessão morreu no servidor.

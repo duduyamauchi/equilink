@@ -44,7 +44,14 @@ abstract final class Ambiente {
   );
 
   /// Raiz da API de eventos quando [analytics] é `http`.
-  static const apiEventos = String.fromEnvironment('EQUILINK_API_EVENTOS', defaultValue: '');
+  ///
+  /// Sem valor próprio, usa a mesma raiz da API de dados: o endpoint `POST
+  /// /eventos` vive no mesmo Worker, então exigir uma segunda variável só
+  /// criava a chance de esquecer uma delas.
+  static const apiEventos = String.fromEnvironment(
+    'EQUILINK_API_EVENTOS',
+    defaultValue: api,
+  );
 
   /// Monta o destino dos eventos conforme a configuração acima.
   ///

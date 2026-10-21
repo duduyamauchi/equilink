@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../fonte_dados.dart';
 import 'evento.dart';
 
 /// Destino dos eventos analíticos.
@@ -92,6 +93,42 @@ class ColetorMemoria implements ColetorAnalytics {
 ///
 /// Os eventos são acumulados e enviados em lotes para reduzir requisições; o
 /// envio é assíncrono e uma falha apenas repõe os eventos na fila.
+/// Lê a telemetria gravada no backend (`GET /eventos`).
+///
+/// Usado pelo painel: os eventos enviados pelo aplicativo ficam no banco e, sem
+/// esta leitura, só a sessão local do navegador aparecia no analytics.
+Future<List<EventoAnalitico>> buscarEventosNaApi({
+  required String base,
+  Map<String, String> cabecalhos = const {},
+  int limite = 1000,
+  Duration tempoLimite = const Duration(seconds: 20),
+  http.Client? cliente,
+}) async {
+  final dono = cliente ?? http.Client();
+  try {
+    final resposta = await dono
+        .get(
+          Uri.parse('$base/eventos?limite=$limite'),
+          headers: {'Accept': 'application/json', ...cabecalhos},
+        )
+        .timeout(tempoLimite);
+    if (resposta.statusCode != 200) {
+      throw ErroFonte(
+        'A API respondeu ${resposta.statusCode} ao carregar a telemetria.',
+        status: resposta.statusCode,
+      );
+    }
+    final corpo = jsonDecode(utf8.decode(resposta.bodyBytes)) as Map<String, dynamic>;
+    final lista = (corpo['eventos'] as List?) ?? const [];
+    return [
+      for (final e in lista)
+        if (e is Map<String, dynamic>) EventoAnalitico.fromJson(e),
+    ];
+  } finally {
+    if (cliente == null) dono.close();
+  }
+}
+
 class ColetorHttp implements ColetorAnalytics {
   ColetorHttp({
     required this.base,
