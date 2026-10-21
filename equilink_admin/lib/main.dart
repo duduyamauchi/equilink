@@ -259,7 +259,10 @@ class _Portao extends StatelessWidget {
 
     switch (rep.estado) {
       case EstadoCarga.pronto:
-        return _ComSessao(sessao: sessao, aoSair: aoSair, child: child);
+        // O selo de sessão é desenhado pela moldura, junto do botão de
+        // sugestões: dois `Positioned` independentes no mesmo canto se
+        // sobrepunham.
+        return SessaoAdminEscopo(sessao: sessao, aoSair: aoSair, child: child);
       case EstadoCarga.erro:
         // Sessão morta no servidor: volta ao login em vez de mostrar erro.
         if (rep.erro != null && rep.erro!.contains('Sessão') && aoExpirar != null) {
@@ -355,50 +358,6 @@ class _ColetorDoPainel implements ColetorAnalytics {
 
 
 /// Moldura mínima que mostra quem está conectado e permite sair.
-class _ComSessao extends StatelessWidget {
-  const _ComSessao({required this.child, this.sessao, this.aoSair});
-
-  final Widget child;
-  final Sessao? sessao;
-  final Future<void> Function()? aoSair;
-
-  @override
-  Widget build(BuildContext context) {
-    if (sessao == null || aoSair == null) return child;
-    return Stack(
-      children: [
-        child,
-        Positioned(
-          right: 16,
-          bottom: 16,
-          child: Material(
-            color: AdminCores.barra,
-            borderRadius: BorderRadius.circular(AdminRaios.total),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AdminRaios.total),
-              onTap: aoSair,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.person_outline, size: 15, color: Colors.white70),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${sessao!.usuario} · ${sessao!.papelRotulo} · sair',
-                      style: const TextStyle(fontSize: 11.5, color: Colors.white70),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 /// Aviso de inatividade: aparece faltando 2 minutos e deixa continuar.
 ///
 /// Sem ele, o operador perdia o que estava digitando quando a sessão caísse.

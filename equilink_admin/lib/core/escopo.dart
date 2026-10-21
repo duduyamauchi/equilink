@@ -12,3 +12,28 @@ class AdminEscopo extends InheritedNotifier<Repositorio> {
     return escopo!.notifier!;
   }
 }
+
+/// Sessão e ação de sair, disponíveis para a moldura do painel.
+///
+/// O selo de sessão e o botão de sugestões dividem o canto inferior direito;
+/// para não se sobreporem, os dois precisam ser desenhados pelo mesmo dono.
+class SessaoAdminEscopo extends InheritedWidget {
+  const SessaoAdminEscopo({
+    super.key,
+    required this.sessao,
+    required this.aoSair,
+    required super.child,
+  });
+
+  final Sessao? sessao;
+  final Future<void> Function()? aoSair;
+
+  static SessaoAdminEscopo? talvezDe(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<SessaoAdminEscopo>();
+
+  @override
+  bool updateShouldNotify(SessaoAdminEscopo oldWidget) =>
+      sessao?.usuario != oldWidget.sessao?.usuario ||
+      sessao?.papel != oldWidget.sessao?.papel ||
+      aoSair != oldWidget.aoSair;
+}

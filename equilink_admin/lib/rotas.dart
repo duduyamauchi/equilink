@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:equilink_core/equilink_core.dart';
 
 import 'core/escopo.dart';
 import 'core/tema.dart';
@@ -145,8 +146,8 @@ class _MolduraState extends State<_Moldura> {
                 Positioned(
                   right: 20,
                   bottom: 20,
-                  child: _BotaoSugestoes(
-                    aoTocar: () => setState(() => _sugestoesAbertas = true),
+                  child: _CantoInferior(
+                    aoAbrirSugestoes: () => setState(() => _sugestoesAbertas = true),
                   ),
                 ),
               if (_sugestoesAbertas)
@@ -211,37 +212,182 @@ class _MolduraState extends State<_Moldura> {
   }
 }
 
-/// Botão que abre as sugestões da página atual.
+/// Canto inferior direito: sugestões em cima, sessão abaixo.
 ///
-/// Fica no canto de todas as páginas: o cliente anota a ideia no momento em que
-/// ela surge, sem procurar onde escrever.
-class _BotaoSugestoes extends StatelessWidget {
-  const _BotaoSugestoes({required this.aoTocar});
+/// Antes, o selo de sessão (desenhado pelo portão de autenticação) e o botão de
+/// sugestões (desenhado pela moldura) eram `Positioned` independentes no mesmo
+/// canto e se sobrepunham. Agora um único dono empilha os dois.
+class _CantoInferior extends StatelessWidget {
+  const _CantoInferior({required this.aoAbrirSugestoes});
 
-  final VoidCallback aoTocar;
+  final VoidCallback aoAbrirSugestoes;
+
+  @override
+  Widget build(BuildContext context) {
+    final sessao = SessaoAdminEscopo.talvezDe(context);
+    final temSessao = sessao?.sessao != null && sessao?.aoSair != null;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _BotaoSugestoes(aoTocar: aoAbrirSugestoes),
+        if (temSessao) ...[
+          const SizedBox(height: 10),
+          _SeloSessao(sessao: sessao!.sessao!, aoSair: sessao.aoSair!),
+        ],
+      ],
+    );
+  }
+}
+
+/// Selo discreto de quem está conectado; clicar encerra a sessão.
+class _SeloSessao extends StatelessWidget {
+  const _SeloSessao({required this.sessao, required this.aoSair});
+
+  final Sessao sessao;
+  final Future<void> Function() aoSair;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: AdminCores.barra,
-      borderRadius: BorderRadius.circular(999),
-      elevation: 4,
+      borderRadius: BorderRadius.circular(AdminRaios.total),
       child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: aoTocar,
+        borderRadius: BorderRadius.circular(AdminRaios.total),
+        onTap: aoSair,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.lightbulb_outline, size: 17, color: AdminCores.douradoClaro),
-              const SizedBox(width: 8),
-              const Text(
+              const Icon(Icons.person_outline, size: 15, color: Colors.white70),
+              const SizedBox(width: 6),
+              Text(
+                '${sessao.usuario} · ${sessao.papelRotulo} · sair',
+                style: const TextStyle(fontSize: 11.5, color: Colors.white70),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Botão que abre as sugestões da página atual.
+///
+/// **Fora do design system, de propósito.** O painel inteiro é verde-escuro e
+/// dourado discreto; este botão precisa ser notado por quem tem a ideia na hora
+/// e não sabe que existe um lugar para escrever. Por isso cor saturada, sombra
+/// alta e um pulso lento — sem repetir nenhum token de [AdminCores].
+class _BotaoSugestoes extends StatefulWidget {
+  const _BotaoSugestoes({required this.aoTocar});
+
+  final VoidCallback aoTocar;
+
+  @override
+  State<_BotaoSugestoes> createState() => _BotaoSugestoesState();
+}
+
+class _BotaoSugestoesState extends State<_BotaoSugestoes>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulso = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2200),
+  );
+
+  /// Quantos ciclos o pulso faz antes de parar.
+  ///
+  /// `repeat()` infinito impediria `pumpAndSettle` de terminar em qualquer
+  /// teste de widget. Três ciclos chamam atenção de quem chega e depois
+  /// deixam o botão em repouso.
+  static const _ciclos = 3;
+  int _feitos = 0;
+
+  /// Amarelo de destaque: existe só aqui, deliberadamente alheio ao tema.
+  static const _amarelo = Color(0xFFFFC23D);
+  static const _tinta = Color(0xFF1A1505);
+
+  @override
+  void initState() {
+    super.initState();
+    _pulso.addStatusListener((status) {
+      if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
+        _feitos += 1;
+        if (_feitos >= _ciclos) {
+          _pulso.stop();
+          _pulso.value = 0;
+        } else {
+          _pulso.reverse();
+        }
+      }
+    });
+    _pulso.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Respeita quem pediu menos movimento no sistema.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _pulso.stop();
+      _pulso.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulso.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulso,
+      builder: (context, filho) {
+        final t = Curves.easeInOut.transform(_pulso.value);
+        return Material(
+          color: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              color: _amarelo,
+              borderRadius: BorderRadius.circular(999),
+              boxShadow: [
+                BoxShadow(
+                  color: _amarelo.withValues(alpha: 0.25 + 0.35 * t),
+                  blurRadius: 12 + 14 * t,
+                  spreadRadius: 1 + 3 * t,
+                ),
+                const BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: filho,
+          ),
+        );
+      },
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: widget.aoTocar,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.lightbulb, size: 19, color: _tinta),
+              SizedBox(width: 9),
+              Text(
                 'Sugestões',
                 style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                  color: _tinta,
                 ),
               ),
             ],
