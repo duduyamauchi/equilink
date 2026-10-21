@@ -5,6 +5,9 @@
 // é a ponte: HTTP do navegador, driver serverless para o banco.
 //
 // Contrato (o mesmo que `FonteHttp` já consome):
+//   POST   /sessao                              -> login (cookie HttpOnly)
+//   DELETE /sessao                              -> logout
+//   GET    /sessao                              -> quem sou eu
 //   GET    /acervo                              -> Acervo
 //   PUT    /acervo                              -> substitui tudo
 //   PUT    /cavalos/:id                         -> grava um cavalo
@@ -15,27 +18,177 @@
 //   PUT    /cavalos/:id/midias/:midiaId         -> grava uma mídia
 //   POST   /cavalos/:id/principal               -> define o destaque do app
 //   POST   /eventos                             -> recebe lote de analytics
+//
+// Segurança:
+//   * Toda escrita exige sessão. Leitura é pública (é um app de vitrine).
+//   * CORS com allowlist exata e credenciais; nunca `*` com cookie.
+//   * Corpo limitado, arrays limitados, campos validados e truncados.
+//   * Erro interno não vaza mensagem do banco: vai para o log com um id.
 
 import { neon } from '@neondatabase/serverless';
+import {
+  acessoDe,
+  conferirSenha,
+  cookieDeSessao,
+  cookieVazio,
+  derivarHash,
+  emitirSessao,
+  gerarSalt,
+  identificar,
+  paraHex,
+} from './auth.js';
 
-const json = (corpo, status = 200) =>
+// ---------------------------------------------------------------------------
+// Resposta
+// ---------------------------------------------------------------------------
+
+/** Origens que podem chamar a API com cookie. Allowlist exata, sem curinga. */
+const ORIGENS_PERMITIDAS = (env) =>
+  (env.ORIGENS_PERMITIDAS ??
+    [
+      'https://quarto-de-milha.quarto-de-milha.workers.dev',
+      'https://quarto-admin.quarto-de-milha.workers.dev',
+      'http://localhost:8080',
+      'http://127.0.0.1:8080',
+    ].join(','))
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+function cabecalhosBase(env, request) {
+  const origem = request?.headers.get('origin') ?? '';
+  const permitidas = ORIGENS_PERMITIDAS(env);
+  const headers = {
+    'content-type': 'application/json; charset=utf-8',
+    'x-content-type-options': 'nosniff',
+    'referrer-policy': 'no-referrer',
+    'cache-control': 'no-store',
+    vary: 'Origin',
+  };
+  // Só devolve a origem exata quando ela está na lista.
+  if (permitidas.includes(origem)) {
+    headers['access-control-allow-origin'] = origem;
+    headers['access-control-allow-credentials'] = 'true';
+    headers['access-control-allow-methods'] = 'GET,PUT,POST,DELETE,OPTIONS';
+    headers['access-control-allow-headers'] = 'content-type,authorization';
+    headers['access-control-max-age'] = '600';
+  }
+  return headers;
+}
+
+const json = (corpo, status = 200, extras = {}) =>
   new Response(JSON.stringify(corpo), {
     status,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'access-control-allow-origin': '*',
-      'access-control-allow-methods': 'GET,PUT,POST,DELETE,OPTIONS',
-      'access-control-allow-headers': 'content-type,authorization',
-    },
+    headers: { ...extras.cabecalhos, ...(extras.headers ?? {}) },
   });
 
-const erro = (mensagem, status = 400) => json({ erro: mensagem }, status);
+const erro = (mensagem, status = 400, extras = {}) =>
+  json({ erro: mensagem }, status, extras);
+
+// ---------------------------------------------------------------------------
+// Validação de entrada
+// ---------------------------------------------------------------------------
+
+const LIMITE_CORPO = 1024 * 1024; // 1 MiB por requisição
+const LIMITE_ARRAY = 500; // itens por coleção enviada
+
+/** Lê o JSON respeitando o limite de tamanho. Lança `ErroValidacao`. */
+async function lerJson(request) {
+  const declarado = Number(request.headers.get('content-length') ?? 0);
+  if (declarado > LIMITE_CORPO) {
+    throw new ErroValidacao('Corpo da requisição acima do limite.', 413);
+  }
+  const texto = await request.text();
+  if (texto.length > LIMITE_CORPO) {
+    throw new ErroValidacao('Corpo da requisição acima do limite.', 413);
+  }
+  if (!texto) return {};
+  try {
+    return JSON.parse(texto);
+  } catch {
+    throw new ErroValidacao('Corpo não é JSON válido.', 400);
+  }
+}
+
+class ErroValidacao extends Error {
+  constructor(mensagem, status = 400) {
+    super(mensagem);
+    this.status = status;
+  }
+}
+
+/** Texto curto, sem controle, truncado. */
+function texto(valor, campo, { max = 500, obrigatorio = false, padrao = '' } = {}) {
+  if (valor == null || valor === '') {
+    if (obrigatorio) throw new ErroValidacao(`Campo obrigatório ausente: ${campo}.`);
+    return padrao;
+  }
+  if (typeof valor !== 'string' && typeof valor !== 'number') {
+    throw new ErroValidacao(`Campo ${campo} deve ser texto.`);
+  }
+  const s = String(valor).replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
+  if (obrigatorio && !s) throw new ErroValidacao(`Campo obrigatório ausente: ${campo}.`);
+  return s.slice(0, max);
+}
+
+/** Identificador: só letras, números, hífen, sublinhado, ponto e dois-pontos. */
+function identificador(valor, campo) {
+  const s = texto(valor, campo, { max: 120, obrigatorio: true });
+  if (!/^[\p{L}\p{N}_.:-]+$/u.test(s)) {
+    throw new ErroValidacao(`Campo ${campo} tem caracteres inválidos.`);
+  }
+  return s;
+}
+
+function listaDe(valor, campo) {
+  if (valor == null) return [];
+  if (!Array.isArray(valor)) throw new ErroValidacao(`Campo ${campo} deve ser uma lista.`);
+  if (valor.length > LIMITE_ARRAY) {
+    throw new ErroValidacao(`Campo ${campo} excede ${LIMITE_ARRAY} itens.`, 413);
+  }
+  return valor;
+}
+
+function objeto(valor, campo) {
+  if (valor == null) return {};
+  if (typeof valor !== 'object' || Array.isArray(valor)) {
+    throw new ErroValidacao(`Campo ${campo} deve ser um objeto.`);
+  }
+  return valor;
+}
+
+function dataIso(valor, campo, { obrigatorio = false } = {}) {
+  if (valor == null || valor === '') {
+    if (obrigatorio) throw new ErroValidacao(`Campo obrigatório ausente: ${campo}.`);
+    return null;
+  }
+  const d = new Date(valor);
+  if (Number.isNaN(d.getTime())) throw new ErroValidacao(`Data inválida em ${campo}.`);
+  return d.toISOString();
+}
+
+function inteiro(valor, campo, { min = 0, max = 1_000_000, padrao = 0 } = {}) {
+  if (valor == null || valor === '') return padrao;
+  const n = Number(valor);
+  if (!Number.isFinite(n)) throw new ErroValidacao(`Campo ${campo} deve ser numérico.`);
+  const i = Math.trunc(n);
+  if (i < min || i > max) throw new ErroValidacao(`Campo ${campo} fora do intervalo.`);
+  return i;
+}
+
+function decimal(valor, campo, { min = 0, max = 100_000, padrao = 0 } = {}) {
+  if (valor == null || valor === '') return padrao;
+  const n = Number(valor);
+  if (!Number.isFinite(n)) throw new ErroValidacao(`Campo ${campo} deve ser numérico.`);
+  if (n < min || n > max) throw new ErroValidacao(`Campo ${campo} fora do intervalo.`);
+  return n;
+}
 
 // ---------------------------------------------------------------------------
 // Conversão entre o JSON do app e as colunas do banco
 // ---------------------------------------------------------------------------
 
-const paraCavalo = (l, provas, midias) => ({
+const paraCavalo = (l, provas, midias, { privado = false } = {}) => ({
   id: l.id,
   nome: l.nome,
   registro: l.registro,
@@ -46,7 +199,13 @@ const paraCavalo = (l, provas, midias) => ({
   altura: l.altura,
   peso: l.peso,
   descricao: l.descricao,
-  proprietario: l.proprietario ?? {},
+  // O telefone do proprietário é contato pessoal: só para quem administra o
+  // haras. O restante do bloco é informação de vitrine.
+  proprietario: privado
+    ? (l.proprietario ?? {})
+    : Object.fromEntries(
+        Object.entries(l.proprietario ?? {}).filter(([chave]) => chave !== 'telefone'),
+      ),
   criador: l.criador ?? {},
   pai: l.pai ?? {},
   mae: l.mae ?? {},
@@ -122,7 +281,7 @@ const paraObservacao = (o) => ({
 // Leitura
 // ---------------------------------------------------------------------------
 
-async function lerAcervo(sql, harasId) {
+async function lerAcervo(sql, harasId, { privado = false } = {}) {
   const cavalos = await sql`
     select c.*,
       coalesce((
@@ -173,9 +332,16 @@ async function lerAcervo(sql, harasId) {
 
   return {
     versao: 1,
-    cavalos: cavalos.map((c) => paraCavalo(c, c.provas.map(paraProva), c.midias.map(paraMidia))),
+    cavalos: cavalos.map((c) =>
+      paraCavalo(c, c.provas.map(paraProva), c.midias.map(paraMidia), { privado }),
+    ),
+    // Manejo, ocorrências e observações só para quem administra o haras:
+    // descrevem rotina, saúde e conduta do animal, não são vitrine. O app
+    // mostra essas listas, então o visitante recebe as baias sem elas.
     baias: baias.map((b) =>
-      paraBaia(b, b.manejo.map(paraTarefa), b.ocorrencias.map(paraOcorrencia), b.observacoes.map(paraObservacao)),
+      privado
+        ? paraBaia(b, b.manejo.map(paraTarefa), b.ocorrencias.map(paraOcorrencia), b.observacoes.map(paraObservacao))
+        : paraBaia(b, [], [], []),
     ),
   };
 }
@@ -241,6 +407,17 @@ async function gravarMidia(sql, cavaloId, m) {
   `;
 }
 
+/**
+ * Ids de tarefa/ocorrência/observação se repetem entre baias no modelo do app,
+ * e a chave primária aqui é global. Prefixa de forma determinística — checar
+ * `id.includes(numero)` errava ('rm12' contém '1'), causando colisão.
+ */
+const prefixoDeBaia = (id, numero) => {
+  const s = String(id);
+  const marca = `${numero}:`;
+  return s.startsWith(marca) ? s : `${marca}${s}`;
+};
+
 async function gravarBaia(sql, harasId, b) {
   await sql`
     insert into baias (numero, haras_id, cavalo_id, status, area, ultima_limpeza, atualizado_em)
@@ -256,7 +433,7 @@ async function gravarBaia(sql, harasId, b) {
   for (const t of b.manejo ?? []) {
     // O mesmo id de tarefa se repete entre baias no modelo do app; a chave
     // primária aqui é global, então prefixamos com o número da baia.
-    const idTarefa = t.id.includes(b.numero) ? t.id : `${b.numero}:${t.id}`;
+    const idTarefa = prefixoDeBaia(t.id, b.numero);
     await sql`
       insert into tarefas_manejo (id, baia_numero, haras_id, tipo, descricao, horario,
                                   quantidade, responsavel, concluida, concluida_em)
@@ -271,7 +448,7 @@ async function gravarBaia(sql, harasId, b) {
   for (const o of b.ocorrencias ?? []) {
     await sql`
       insert into ocorrencias (id, baia_numero, haras_id, data, tipo, descricao, responsavel, resolvida)
-      values (${o.id.includes(b.numero) ? o.id : `${b.numero}:${o.id}`}, ${b.numero}, ${harasId},
+      values (${prefixoDeBaia(o.id, b.numero)}, ${b.numero}, ${harasId},
               ${o.data ?? new Date().toISOString()}, ${o.tipo}, ${o.descricao},
               ${o.responsavel ?? ''}, ${o.resolvida ?? false})
       on conflict (id) do nothing
@@ -282,7 +459,7 @@ async function gravarBaia(sql, harasId, b) {
   for (const v of b.observacoes ?? []) {
     await sql`
       insert into observacoes (id, baia_numero, haras_id, data, autor, texto)
-      values (${v.id.includes(b.numero) ? v.id : `${b.numero}:${v.id}`}, ${b.numero}, ${harasId},
+      values (${prefixoDeBaia(v.id, b.numero)}, ${b.numero}, ${harasId},
               ${v.data ?? new Date().toISOString()}, ${v.autor ?? ''}, ${v.texto})
       on conflict (id) do nothing
     `;
@@ -416,13 +593,13 @@ async function gravarBaiasEmLote(sql, harasId, baias) {
   const observacoes = [];
   for (const b of baias) {
     for (const t of b.manejo ?? []) {
-      tarefas.push({ ...t, baiaNumero: b.numero, idUnico: `${b.numero}:${t.id}` });
+      tarefas.push({ ...t, baiaNumero: b.numero, idUnico: prefixoDeBaia(t.id, b.numero) });
     }
     for (const o of b.ocorrencias ?? []) {
-      ocorrencias.push({ ...o, baiaNumero: b.numero, idUnico: `${b.numero}:${o.id}` });
+      ocorrencias.push({ ...o, baiaNumero: b.numero, idUnico: prefixoDeBaia(o.id, b.numero) });
     }
     for (const v of b.observacoes ?? []) {
-      observacoes.push({ ...v, baiaNumero: b.numero, idUnico: `${b.numero}:${v.id}` });
+      observacoes.push({ ...v, baiaNumero: b.numero, idUnico: prefixoDeBaia(v.id, b.numero) });
     }
   }
 
@@ -482,105 +659,457 @@ async function gravarBaiasEmLote(sql, harasId, baias) {
 }
 
 // ---------------------------------------------------------------------------
+// Sessão e bloqueio por tentativa repetida
+// ---------------------------------------------------------------------------
+
+/** Hash do IP: guarda o suficiente para bloquear, sem armazenar o endereço. */
+const hashIp = (request, env) => {
+  const ip =
+    request.headers.get('cf-connecting-ip') ??
+    request.headers.get('x-forwarded-for') ??
+    'desconhecido';
+  return paraHex(new TextEncoder().encode(`${ip}:${env.SESSION_SECRET ?? ''}`));
+};
+
+const JANELA_BLOQUEIO_MIN = 15;
+const MAX_TENTATIVAS = 5;
+
+async function bloqueado(sql, ipHash, usuarioId) {
+  const porIp = await sql`
+    select count(*)::int as n from tentativas_login
+    where ip_hash = ${ipHash} and not sucesso
+      and quando > now() - interval '15 minutes'
+  `;
+  const porUsuario = usuarioId
+    ? await sql`
+        select count(*)::int as n from tentativas_login
+        where usuario_id = ${usuarioId} and not sucesso
+          and quando > now() - interval '15 minutes'
+      `
+    : [{ n: 0 }];
+  return porIp[0].n >= MAX_TENTATIVAS || porUsuario[0].n >= MAX_TENTATIVAS;
+}
+
+async function registrarTentativa(sql, ipHash, usuarioId, sucesso) {
+  await sql`
+    insert into tentativas_login (ip_hash, usuario_id, sucesso)
+    values (${ipHash}, ${usuarioId ?? ''}, ${sucesso})
+  `;
+  // Poda: mantém a tabela pequena, só a janela recente importa.
+  await sql`delete from tentativas_login where quando < now() - interval '2 days'`;
+}
+
+// ---------------------------------------------------------------------------
 // Roteamento
 // ---------------------------------------------------------------------------
 
+const COOKIE_SEGURO = (request) => {
+  const url = new URL(request.url);
+  return url.protocol === 'https:';
+};
+
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+    const base = cabecalhosBase(env, request);
+
+    // Preflight: responde só para origem conhecida; sem curinga.
     if (request.method === 'OPTIONS') {
-      return new Response(null, {
-        status: 204,
-        headers: {
-          'access-control-allow-origin': '*',
-          'access-control-allow-methods': 'GET,PUT,POST,DELETE,OPTIONS',
-          'access-control-allow-headers': 'content-type,authorization',
-        },
-      });
+      if (!base['access-control-allow-origin']) {
+        return new Response(null, { status: 403, headers: base });
+      }
+      return new Response(null, { status: 204, headers: base });
     }
 
-    const url = new URL(request.url);
     const partes = url.pathname.split('/').filter(Boolean);
     const sql = neon(env.DATABASE_URL);
+    const seguro = COOKIE_SEGURO(request);
 
-    // Enquanto não há login, todo o acervo é de um haras só.
-    // Quando o login entrar, este id virá do token do usuário.
-    const harasId = env.HARAS_ID ?? '00000000-0000-0000-0000-000000000001';
+    if (!env.SESSION_SECRET) {
+      // Sem segredo não há como assinar sessão. Falhar fechado é melhor que
+      // servir uma API que aceita qualquer coisa.
+      return erro('Servidor sem SESSION_SECRET configurado.', 503, { cabecalhos: base });
+    }
 
     try {
-      // GET /acervo
+      // -------------------------------------------------------------------
+      // Sessão
+      // -------------------------------------------------------------------
+
+      if (partes[0] === 'sessao') {
+        // POST /sessao — login
+        if (request.method === 'POST') {
+          const corpo = await lerJson(request);
+          const usuarioId = texto(corpo.usuario, 'usuario', { max: 120, obrigatorio: true });
+          const senha = texto(corpo.senha, 'senha', { max: 200, obrigatorio: true });
+          const ipHash = hashIp(request, env);
+
+          if (await bloqueado(sql, ipHash, usuarioId)) {
+            return erro(
+              'Muitas tentativas. Aguarde 15 minutos.',
+              429,
+              { cabecalhos: base },
+            );
+          }
+
+          // Mensagem única para usuário inexistente e senha errada: não
+          // confirma quais contas existem.
+          // Mesmo custo de CPU quando o usuário não existe (hash de isca).
+          const registros = await sql`
+            select usuario_id, hash, salt, iteracoes from credenciais where usuario_id = ${usuarioId}
+          `;
+          const registro = registros[0];
+          // Mesmo custo de CPU quando o usuário não existe (hash de isca),
+          // para não revelar por tempo de resposta quais contas existem.
+          const confere = registro
+            ? await conferirSenha(senha, registro, env.PEPPER_SENHA)
+            : (await derivarHash(senha, gerarSalt(), undefined, env.PEPPER_SENHA), false);
+
+          if (!registro || !confere) {
+            await registrarTentativa(sql, ipHash, usuarioId, false);
+            return erro('Usuário ou senha inválidos.', 401, { cabecalhos: base });
+          }
+
+          await registrarTentativa(sql, ipHash, usuarioId, true);
+          const cookie = cookieDeSessao(await emitirSessao(usuarioId, env.SESSION_SECRET), {
+            seguro,
+          });
+          const acesso = await acessoDe(sql, { tipo: 'usuario', usuarioId }, env);
+          return json(
+            { usuario: usuarioId, harasId: acesso?.harasId ?? null, papel: acesso?.papel ?? null },
+            200,
+            { cabecalhos: base, headers: { 'set-cookie': cookie } },
+          );
+        }
+
+        // DELETE /sessao — logout
+        if (request.method === 'DELETE') {
+          return json({ ok: true }, 200, {
+            cabecalhos: base,
+            headers: { 'set-cookie': cookieVazio(seguro) },
+          });
+        }
+
+        // GET /sessao — quem sou eu
+        if (request.method === 'GET') {
+          const identidade = await identificar(request, env);
+          const acesso = await acessoDe(sql, identidade, env);
+          if (!acesso) return json({ autenticado: false }, 200, { cabecalhos: base });
+          return json(
+            {
+              autenticado: true,
+              usuario: identidade.usuarioId,
+              harasId: acesso.harasId,
+              papel: acesso.papel,
+            },
+            200,
+            { cabecalhos: base },
+          );
+        }
+      }
+
+      // -------------------------------------------------------------------
+      // A partir daqui: identidade resolvida uma vez
+      // -------------------------------------------------------------------
+
+      const identidade = await identificar(request, env);
+      const acesso = await acessoDe(sql, identidade, env);
+      const autenticado = Boolean(acesso);
+      const podeEscrever = autenticado && acesso.papel !== 'leitor';
+      const podeRemover = autenticado && acesso.papel === 'proprietario';
+
+      const recusarEscrita = () =>
+        erro(
+          autenticado
+            ? 'Seu papel não permite esta operação.'
+            : 'Autenticação necessária para gravar.',
+          autenticado ? 403 : 401,
+          { cabecalhos: base },
+        );
+
+      // GET /acervo — público, mas sem dado privado
       if (partes[0] === 'acervo' && request.method === 'GET') {
-        return json(await lerAcervo(sql, harasId));
+        if (!acesso) {
+          // Visitante: qualquer haras que tenha animais publicados. Hoje há um.
+          const alvo = env.HARAS_PUBLICO ?? env.HARAS_ID;
+          if (!alvo) return erro('Nenhum haras público configurado.', 404, { cabecalhos: base });
+          return json(await lerAcervo(sql, alvo, { privado: false }), 200, { cabecalhos: base });
+        }
+        return json(await lerAcervo(sql, acesso.harasId, { privado: true }), 200, {
+          cabecalhos: base,
+        });
       }
 
       // PUT /acervo — substituição total (migração entre fontes)
       if (partes[0] === 'acervo' && request.method === 'PUT') {
-        const corpo = await request.json();
-        for (const c of corpo.cavalos ?? []) {
-          await gravarCavalo(sql, harasId, c);
-        }
-        await gravarBaiasEmLote(sql, harasId, corpo.baias ?? []);
-        return json(await lerAcervo(sql, harasId));
+        if (!podeEscrever) return recusarEscrita();
+        const corpo = await lerJson(request);
+        const cavalos = listaDe(corpo.cavalos, 'cavalos').map((c) => normalizarCavalo(c, null));
+        const baias = listaDe(corpo.baias, 'baias').map((b) => normalizarBaia(b));
+        await gravarAcervoEmLote(sql, acesso.harasId, { cavalos, baias });
+        return json(await lerAcervo(sql, acesso.harasId, { privado: true }), 200, {
+          cabecalhos: base,
+        });
       }
 
-      // POST /eventos — lote de analytics
+      // POST /eventos — lote de analytics (público: telemetria do app)
       if (partes[0] === 'eventos' && request.method === 'POST') {
-        const corpo = await request.json();
-        const lista = corpo.eventos ?? [];
+        const corpo = await lerJson(request);
+        const lista = listaDe(corpo.eventos, 'eventos');
+        let recebidos = 0;
         for (const e of lista) {
+          const nome = texto(e?.nome, 'nome', { max: 80, obrigatorio: true });
           await sql`
             insert into eventos_analiticos (nome, quando, sessao, usuario, tela,
                                             entidade, entidade_id, valor, propriedades, haras_id)
-            values (${e.nome}, ${e.quando ?? new Date().toISOString()}, ${e.sessao},
-                    ${e.usuario ?? null}, ${e.tela ?? null}, ${e.entidade ?? null},
-                    ${e.entidadeId ?? null}, ${e.valor ?? null},
-                    ${JSON.stringify(e.propriedades ?? {})}::jsonb, ${harasId})
+            values (${nome}, ${dataIso(e?.quando, 'quando') ?? new Date().toISOString()},
+                    ${texto(e?.sessao, 'sessao', { max: 80, obrigatorio: true })},
+                    ${texto(e?.usuario, 'usuario', { max: 120 }) || null},
+                    ${texto(e?.tela, 'tela', { max: 80 }) || null},
+                    ${texto(e?.entidade, 'entidade', { max: 60 }) || null},
+                    ${texto(e?.entidadeId, 'entidadeId', { max: 120 }) || null},
+                    ${e?.valor == null ? null : decimal(e.valor, 'valor', { min: -1e9, max: 1e9 })},
+                    ${JSON.stringify(objeto(e?.propriedades, 'propriedades'))}::jsonb,
+                    ${acesso?.harasId ?? (env.HARAS_PUBLICO ?? env.HARAS_ID)})
           `;
+          recebidos += 1;
         }
-        return json({ recebidos: lista.length }, 201);
+        return json({ recebidos }, 201, { cabecalhos: base });
       }
 
       // /cavalos/:id
       if (partes[0] === 'cavalos' && partes[1]) {
-        const id = decodeURIComponent(partes[1]);
+        const id = identificador(decodeURIComponent(partes[1]), 'id');
 
         if (request.method === 'PUT' && !partes[2]) {
-          await gravarCavalo(sql, harasId, await request.json());
-          return json({ ok: true });
+          if (!podeEscrever) return recusarEscrita();
+          await gravarCavalo(sql, acesso.harasId, normalizarCavalo(await lerJson(request), id));
+          return json({ ok: true }, 200, { cabecalhos: base });
         }
+
         if (request.method === 'DELETE' && !partes[2]) {
-          await sql`delete from cavalos where id = ${id} and haras_id = ${harasId}`;
-          return json({ ok: true });
+          if (!podeRemover) return recusarEscrita();
+          const removidos = await sql`
+            delete from cavalos where id = ${id} and haras_id = ${acesso.harasId}
+            returning id
+          `;
+          if (!removidos.length) return erro('Cavalo não encontrado.', 404, { cabecalhos: base });
+          return json({ ok: true }, 200, { cabecalhos: base });
         }
+
         if (request.method === 'PUT' && partes[2] === 'provas' && partes[3]) {
-          await gravarProva(sql, id, await request.json());
-          return json({ ok: true });
+          if (!podeEscrever) return recusarEscrita();
+          const provaId = identificador(decodeURIComponent(partes[3]), 'provaId');
+          if (!(await cavaloDoHaras(sql, id, acesso.harasId))) {
+            return erro('Cavalo não encontrado.', 404, { cabecalhos: base });
+          }
+          await gravarProva(sql, id, normalizarProva(await lerJson(request), provaId));
+          return json({ ok: true }, 200, { cabecalhos: base });
         }
+
         if (request.method === 'PUT' && partes[2] === 'midias' && partes[3]) {
-          await gravarMidia(sql, id, await request.json());
-          return json({ ok: true });
+          if (!podeEscrever) return recusarEscrita();
+          const midiaId = identificador(decodeURIComponent(partes[3]), 'midiaId');
+          if (!(await cavaloDoHaras(sql, id, acesso.harasId))) {
+            return erro('Cavalo não encontrado.', 404, { cabecalhos: base });
+          }
+          await gravarMidia(sql, id, normalizarMidia(await lerJson(request), midiaId));
+          return json({ ok: true }, 200, { cabecalhos: base });
         }
+
         if (request.method === 'POST' && partes[2] === 'principal') {
-          await sql`update cavalos set principal = (id = ${id}) where haras_id = ${harasId}`;
-          return json({ ok: true });
+          if (!podeEscrever) return recusarEscrita();
+          const alvo = await sql`
+            update cavalos set principal = (id = ${id}) where haras_id = ${acesso.harasId}
+            returning id
+          `;
+          if (!alvo.length) return erro('Cavalo não encontrado.', 404, { cabecalhos: base });
+          return json({ ok: true }, 200, { cabecalhos: base });
         }
       }
 
       // /baias/:numero
       if (partes[0] === 'baias' && partes[1]) {
-        const numero = decodeURIComponent(partes[1]);
+        const numero = identificador(decodeURIComponent(partes[1]), 'numero');
+
         if (request.method === 'PUT') {
-          await gravarBaia(sql, harasId, await request.json());
-          return json({ ok: true });
+          if (!podeEscrever) return recusarEscrita();
+          await gravarBaia(sql, acesso.harasId, normalizarBaia(await lerJson(request), numero));
+          return json({ ok: true }, 200, { cabecalhos: base });
         }
+
         if (request.method === 'DELETE') {
-          await sql`delete from baias where numero = ${numero} and haras_id = ${harasId}`;
-          return json({ ok: true });
+          if (!podeRemover) return recusarEscrita();
+          const removidas = await sql`
+            delete from baias where numero = ${numero} and haras_id = ${acesso.harasId}
+            returning numero
+          `;
+          if (!removidas.length) return erro('Baia não encontrada.', 404, { cabecalhos: base });
+          return json({ ok: true }, 200, { cabecalhos: base });
         }
       }
 
-      return erro('Rota não encontrada: ' + url.pathname, 404);
+      return erro('Rota não encontrada.', 404, { cabecalhos: base });
     } catch (e) {
-      return erro(e?.message ?? 'Falha inesperada', 500);
+      if (e instanceof ErroValidacao) {
+        return erro(e.message, e.status, { cabecalhos: base });
+      }
+      // Erro interno: a mensagem do banco pode conter SQL, nome de coluna ou
+      // dado de outro haras. Loga com um id e devolve só o id.
+      const idErro = crypto.randomUUID().slice(0, 8);
+      console.error(`[${idErro}]`, request.method, url.pathname, e?.message);
+      return erro('Falha interna ao processar a requisição.', 500, {
+        cabecalhos: base,
+        headers: { 'x-erro-id': idErro },
+      });
     }
   },
 };
+
+// ---------------------------------------------------------------------------
+// Normalização: a entrada do cliente nunca chega crua ao banco
+// ---------------------------------------------------------------------------
+
+/** Confere que o cavalo pertence ao haras antes de gravar filhos nele. */
+async function cavaloDoHaras(sql, id, harasId) {
+  const linhas = await sql`
+    select id from cavalos where id = ${id} and haras_id = ${harasId}
+  `;
+  return linhas.length > 0;
+}
+
+function normalizarCavalo(bruto, idForcado) {
+  const c = objeto(bruto, 'cavalo');
+  const id = idForcado ?? identificador(c.id, 'id');
+  const sexo = texto(c.sexo, 'sexo', { max: 10, padrao: 'femea' });
+  if (sexo !== 'femea' && sexo !== 'macho') {
+    throw new ErroValidacao('Campo sexo deve ser "femea" ou "macho".');
+  }
+  const proprietario = objeto(c.proprietario, 'proprietario');
+  return {
+    id,
+    nome: texto(c.nome, 'nome', { max: 120, obrigatorio: true }),
+    registro: texto(c.registro, 'registro', { max: 40, obrigatorio: true }),
+    sexo,
+    nascimento: dataIso(c.nascimento, 'nascimento', { obrigatorio: true }),
+    pelagem: texto(c.pelagem, 'pelagem', { max: 60 }),
+    raca: texto(c.raca, 'raca', { max: 60, padrao: 'Quarto de Milha' }),
+    altura: texto(c.altura, 'altura', { max: 20 }),
+    peso: texto(c.peso, 'peso', { max: 20 }),
+    descricao: texto(c.descricao, 'descricao', { max: 4000 }),
+    fotoPerfil: texto(c.fotoPerfil, 'fotoPerfil', { max: 500 }),
+    principal: c.principal === true,
+    proprietario: {
+      nome: texto(proprietario.nome, 'proprietario.nome', { max: 120 }),
+      fazenda: texto(proprietario.fazenda, 'proprietario.fazenda', { max: 120 }),
+      cidade: texto(proprietario.cidade, 'proprietario.cidade', { max: 120 }),
+      telefone: texto(proprietario.telefone, 'proprietario.telefone', { max: 40 }),
+    },
+    criador: {
+      nome: texto(c.criador?.nome, 'criador.nome', { max: 120 }),
+      cidade: texto(c.criador?.cidade, 'criador.cidade', { max: 120 }),
+    },
+    pai: {
+      nome: texto(c.pai?.nome, 'pai.nome', { max: 120 }),
+      registro: texto(c.pai?.registro, 'pai.registro', { max: 40 }),
+    },
+    mae: {
+      nome: texto(c.mae?.nome, 'mae.nome', { max: 120 }),
+      registro: texto(c.mae?.registro, 'mae.registro', { max: 40 }),
+    },
+    sgpeUrl: urlSegura(c.sgpeUrl, 'sgpeUrl'),
+    provas: listaDe(c.provas, 'provas').map((p) => normalizarProva(p, null)),
+    midias: listaDe(c.midias, 'midias').map((m) => normalizarMidia(m, null)),
+  };
+}
+
+/** Só http(s) absoluto, ou caminho de asset. Bloqueia `javascript:`, `data:`. */
+function urlSegura(valor, campo) {
+  const s = texto(valor, campo, { max: 500 });
+  if (!s) return null;
+  if (s.startsWith('assets/')) return s;
+  let u;
+  try {
+    u = new URL(s);
+  } catch {
+    throw new ErroValidacao(`Campo ${campo} deve ser uma URL válida.`);
+  }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') {
+    throw new ErroValidacao(`Campo ${campo} só aceita http ou https.`);
+  }
+  return u.toString();
+}
+
+function normalizarProva(bruto, idForcado) {
+  const p = objeto(bruto, 'prova');
+  return {
+    id: idForcado ?? identificador(p.id, 'prova.id'),
+    data: dataIso(p.data, 'prova.data', { obrigatorio: true }),
+    nome: texto(p.nome, 'prova.nome', { max: 120, obrigatorio: true }),
+    local: texto(p.local, 'prova.local', { max: 120 }),
+    categoria: texto(p.categoria, 'prova.categoria', { max: 60 }),
+    colocacao: inteiro(p.colocacao, 'prova.colocacao', { min: 1, max: 999, padrao: 1 }),
+    tempoSegundos: decimal(p.tempoSegundos, 'prova.tempoSegundos', { min: 0, max: 100000 }),
+    inscritos: inteiro(p.inscritos, 'prova.inscritos', { min: 0, max: 100000 }),
+    premiacao: texto(p.premiacao, 'prova.premiacao', { max: 80 }) || null,
+  };
+}
+
+function normalizarMidia(bruto, idForcado) {
+  const m = objeto(bruto, 'midia');
+  const tipo = texto(m.tipo, 'midia.tipo', { max: 10, padrao: 'foto' });
+  if (tipo !== 'foto' && tipo !== 'video') {
+    throw new ErroValidacao('Campo midia.tipo deve ser "foto" ou "video".');
+  }
+  const arquivo = urlSegura(m.arquivo, 'midia.arquivo');
+  if (!arquivo) throw new ErroValidacao('Campo midia.arquivo é obrigatório.');
+  return {
+    id: idForcado ?? identificador(m.id, 'midia.id'),
+    tipo,
+    arquivo,
+    legenda: texto(m.legenda, 'midia.legenda', { max: 300 }),
+    local: texto(m.local, 'midia.local', { max: 120 }) || null,
+    poster: urlSegura(m.poster, 'midia.poster'),
+    duracaoSegundos: m.duracaoSegundos == null
+      ? null
+      : inteiro(m.duracaoSegundos, 'midia.duracaoSegundos', { min: 0, max: 100000 }),
+  };
+}
+
+function normalizarBaia(bruto, numeroForcado) {
+  const b = objeto(bruto, 'baia');
+  const numero = numeroForcado ?? identificador(b.numero, 'baia.numero');
+  const status = texto(b.status, 'baia.status', { max: 20, padrao: 'emDia' });
+  const permitidos = ['emDia', 'atencao', 'manutencao'];
+  return {
+    numero,
+    cavaloId: texto(b.cavaloId, 'baia.cavaloId', { max: 120 }) || null,
+    status: permitidos.includes(status) ? status : 'emDia',
+    area: texto(b.area, 'baia.area', { max: 120, padrao: 'Haras principal' }),
+    ultimaLimpeza: dataIso(b.ultimaLimpeza, 'baia.ultimaLimpeza'),
+    manejo: listaDe(b.manejo, 'baia.manejo').map((t) => ({
+      id: identificador(t?.id, 'tarefa.id'),
+      tipo: texto(t?.tipo, 'tarefa.tipo', { max: 40, obrigatorio: true }),
+      descricao: texto(t?.descricao, 'tarefa.descricao', { max: 300 }),
+      horario: texto(t?.horario, 'tarefa.horario', { max: 10 }),
+      quantidade: texto(t?.quantidade, 'tarefa.quantidade', { max: 40 }),
+      responsavel: texto(t?.responsavel, 'tarefa.responsavel', { max: 120 }),
+      concluida: t?.concluida === true,
+      concluidaEm: dataIso(t?.concluidaEm, 'tarefa.concluidaEm'),
+    })),
+    ocorrencias: listaDe(b.ocorrencias, 'baia.ocorrencias').map((o) => ({
+      id: identificador(o?.id, 'ocorrencia.id'),
+      data: dataIso(o?.data, 'ocorrencia.data') ?? new Date().toISOString(),
+      tipo: texto(o?.tipo, 'ocorrencia.tipo', { max: 40, obrigatorio: true }),
+      descricao: texto(o?.descricao, 'ocorrencia.descricao', { max: 1000 }),
+      responsavel: texto(o?.responsavel, 'ocorrencia.responsavel', { max: 120 }),
+      resolvida: o?.resolvida === true,
+    })),
+    observacoes: listaDe(b.observacoes, 'baia.observacoes').map((v) => ({
+      id: identificador(v?.id, 'observacao.id'),
+      data: dataIso(v?.data, 'observacao.data') ?? new Date().toISOString(),
+      autor: texto(v?.autor, 'observacao.autor', { max: 120 }),
+      texto: texto(v?.texto, 'observacao.texto', { max: 2000, obrigatorio: true }),
+    })),
+  };
+}
