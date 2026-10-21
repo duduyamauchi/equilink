@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:quarto_core/quarto_core.dart';
 
 import '../core/escopo.dart';
-import '../core/formatos.dart';
 import '../core/tema.dart';
 import '../rotas.dart';
 import '../widgets/comuns.dart';

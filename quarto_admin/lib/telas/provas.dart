@@ -37,7 +37,7 @@ class _TelaProvasState extends State<TelaProvas> {
     final totalVitorias = linhas.where((l) => l.prova.vitoria as bool).length;
     final melhor = linhas.isEmpty
         ? null
-        : linhas.map((l) => l.prova.tempoSegundos as double).reduce((a, b) => a < b ? a : b);
+        : Analise.menorValor(linhas.map((l) => l.prova.tempoSegundos as double));
 
     return ListView(
       padding: const EdgeInsets.all(20),

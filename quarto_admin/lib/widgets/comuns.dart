@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:quarto_ui/quarto_ui.dart';
+
 import '../core/tema.dart';
 
 /// Cabeçalho de uma seção do painel, com ação opcional à direita.
@@ -55,7 +57,7 @@ class CabecalhoSecao extends StatelessWidget {
   }
 }
 
-/// Cartão branco padrão do painel.
+/// Cartão branco padrão do painel (estrutura compartilhada em [PainelUi]).
 class Painel extends StatelessWidget {
   const Painel({super.key, required this.child, this.padding = const EdgeInsets.all(18)});
 
@@ -63,21 +65,10 @@ class Painel extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: AdminCores.superficie,
-        borderRadius: BorderRadius.circular(AdminRaios.medio),
-        border: Border.all(color: AdminCores.borda),
-      ),
-      child: child,
-    );
-  }
+  Widget build(BuildContext context) => PainelUi(padding: padding, child: child);
 }
 
-/// Rótulo de estado, com cor por significado.
+/// Rótulo de estado, com cor por significado (estrutura em [EtiquetaUi]).
 class Etiqueta extends StatelessWidget {
   const Etiqueta(this.texto, {super.key, required this.cor, required this.fundo, this.icone});
 
@@ -86,47 +77,19 @@ class Etiqueta extends StatelessWidget {
   final Color fundo;
   final IconData? icone;
 
-  factory Etiqueta.status(String status) => switch (status) {
-    'Em dia' => const Etiqueta(
-      'Em dia',
-      cor: AdminCores.verde,
-      fundo: AdminCores.verdeFundo,
-      icone: Icons.check_circle,
-    ),
-    'Manutenção' => const Etiqueta(
-      'Manutenção',
-      cor: AdminCores.ambar,
-      fundo: AdminCores.ambarFundo,
-      icone: Icons.build_circle,
-    ),
-    _ => const Etiqueta(
-      'Atenção',
-      cor: AdminCores.vermelho,
-      fundo: AdminCores.vermelhoFundo,
-      icone: Icons.error,
-    ),
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(color: fundo, borderRadius: BorderRadius.circular(AdminRaios.total)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icone != null) ...[
-            Icon(icone, size: 12, color: cor),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            texto,
-            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: cor),
-          ),
-        ],
-      ),
+  factory Etiqueta.status(String status) {
+    final base = EtiquetaUi.status(status, paletaDoPainel);
+    return Etiqueta(
+      base.texto,
+      cor: base.cor,
+      fundo: base.fundo,
+      icone: base.icone,
     );
   }
+
+  @override
+  Widget build(BuildContext context) =>
+      EtiquetaUi(texto, cor: cor, fundo: fundo, icone: icone);
 }
 
 /// Número grande com rótulo — usados no topo do painel.
@@ -194,7 +157,7 @@ class Indicador extends StatelessWidget {
   }
 }
 
-/// Estado vazio padronizado.
+/// Estado vazio padronizado (estrutura em [VazioUi]).
 class Vazio extends StatelessWidget {
   const Vazio({super.key, required this.icone, required this.titulo, this.descricao, this.acao});
 
@@ -204,38 +167,15 @@ class Vazio extends StatelessWidget {
   final Widget? acao;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
-      child: Column(
-        children: [
-          Icon(icone, size: 32, color: AdminCores.textoSecundario.withValues(alpha: 0.55)),
-          const SizedBox(height: 12),
-          Text(
-            titulo,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AdminCores.texto),
-          ),
-          if (descricao != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              descricao!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12.5,
-                color: AdminCores.textoSecundario,
-                height: 1.45,
-              ),
-            ),
-          ],
-          if (acao != null) ...[const SizedBox(height: 16), acao!],
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => VazioUi(
+    icone: icone,
+    titulo: titulo,
+    descricao: descricao,
+    acao: acao,
+  );
 }
 
-/// Rótulo curto em caixa alta com o valor abaixo.
+/// Rótulo curto em caixa alta com o valor abaixo (estrutura em [CampoUi]).
 class Campo extends StatelessWidget {
   const Campo({super.key, required this.rotulo, required this.valor, this.icone});
 
@@ -244,37 +184,8 @@ class Campo extends StatelessWidget {
   final IconData? icone;
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            if (icone != null) ...[
-              Icon(icone, size: 12, color: AdminCores.textoSecundario),
-              const SizedBox(width: 4),
-            ],
-            Flexible(
-              child: Text(
-                rotulo.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                  color: AdminCores.textoSecundario,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 3),
-        Text(
-          valor,
-          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, height: 1.25),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) =>
+      CampoUi(rotulo: rotulo, valor: valor, icone: icone);
 }
 
 /// Faixa de aviso exibida quando a última gravação falhou.

@@ -5,6 +5,18 @@
 /// formato de transporte.
 library;
 
+/// Caminhos padrão de mídia usados quando um registro não traz o seu.
+///
+/// Centralizado para que mover ou renomear um asset não exija caçar strings
+/// espalhadas pelas telas.
+abstract final class MidiaPadrao {
+  /// Imagem usada quando não há foto de perfil cadastrada.
+  static const imagem = 'assets/img/hero.jpg';
+
+  /// Capa usada quando um vídeo não traz imagem própria.
+  static const capaVideo = 'assets/img/act1.jpg';
+}
+
 enum Sexo {
   femea('Fêmea'),
   macho('Macho');

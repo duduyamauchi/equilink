@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/formatos.dart';
-import '../core/tema.dart';
 import 'package:quarto_core/quarto_core.dart';
+import '../core/tema.dart';
 import '../escopo.dart';
 import '../rotas.dart';
 import '../servicos/compartilhar.dart';
@@ -481,7 +480,7 @@ class _ListaVideos extends StatelessWidget {
                     AspectRatio(
                       aspectRatio: 16 / 9,
                       child: Image.asset(
-                        video.poster ?? 'assets/img/act1.jpg',
+                        video.poster ?? MidiaPadrao.capaVideo,
                         fit: BoxFit.cover,
                       ),
                     ),

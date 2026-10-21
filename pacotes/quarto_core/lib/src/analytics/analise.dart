@@ -80,6 +80,40 @@ abstract final class Analise {
     ]..sort((a, b) => b.total.compareTo(a.total));
   }
 
+
+  // ---------------------------------------------------------------------------
+  // Escalas de gráfico
+  // ---------------------------------------------------------------------------
+
+  /// Maior valor de uma série, para dimensionar barras.
+  ///
+  /// Devolve 0 para série vazia, evitando divisão por zero em gráficos.
+  static double maiorValor(Iterable<num> valores) {
+    var maior = 0.0;
+    for (final v in valores) {
+      if (v > maior) maior = v.toDouble();
+    }
+    return maior;
+  }
+
+  /// Menor valor de uma série. Devolve 0 para série vazia.
+  static double menorValor(Iterable<num> valores) {
+    double? menor;
+    for (final v in valores) {
+      if (menor == null || v < menor) menor = v.toDouble();
+    }
+    return menor ?? 0;
+  }
+
+  /// Normaliza um valor para a faixa 0..1, respeitando um piso mínimo.
+  ///
+  /// `piso` evita que uma barra de valor zero desapareça por completo.
+  static double normalizar(num valor, num maior, {double piso = 0.0}) {
+    if (maior <= 0) return piso;
+    final f = valor / maior;
+    return f.clamp(piso, 1.0);
+  }
+
   // ---------------------------------------------------------------------------
   // Funil
   // ---------------------------------------------------------------------------

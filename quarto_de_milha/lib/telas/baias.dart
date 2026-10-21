@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/formatos.dart';
-import '../core/tema.dart';
 import 'package:quarto_core/quarto_core.dart';
+import '../core/tema.dart';
 import '../escopo.dart';
 import '../rotas.dart';
 import '../widgets/comuns.dart';
@@ -443,7 +442,7 @@ class _AbaRelatorios extends StatelessWidget {
     final consumo = repositorio.consumoDiario;
     final maiorConsumo = consumo.isEmpty
         ? 1.0
-        : consumo.map((c) => c.quilos).reduce((a, b) => a > b ? a : b);
+        : Analise.maiorValor(consumo.map((c) => c.quilos));
     final totalTarefas = repositorio.tarefasConcluidasTotal + repositorio.manejoPendenteTotal;
     final fracaoConcluida = totalTarefas == 0
         ? 0.0

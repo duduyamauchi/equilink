@@ -508,6 +508,13 @@ packages:
       relative: true
     source: path
     version: "1.0.0"
+  quarto_ui:
+    dependency: "direct main"
+    description:
+      path: "../pacotes/quarto_ui"
+      relative: true
+    source: path
+    version: "1.0.0"
   record_use:
     dependency: transitive
     description:

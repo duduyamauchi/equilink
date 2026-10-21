@@ -172,7 +172,7 @@ class Repositorio extends ChangeNotifier {
   String fotoCavalo(String id) {
     final foto = cavaloPorId(id)?.fotoPerfil;
     if (foto != null && foto.isNotEmpty) return foto;
-    return 'assets/img/hero.jpg';
+    return MidiaPadrao.imagem;
   }
 
   List<Baia> get baiasOrdenadas =>

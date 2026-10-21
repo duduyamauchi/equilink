@@ -3,7 +3,6 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:quarto_de_milha/app.dart';
-import 'package:quarto_de_milha/core/formatos.dart';
 import 'package:quarto_core/quarto_core.dart';
 
 void main() {

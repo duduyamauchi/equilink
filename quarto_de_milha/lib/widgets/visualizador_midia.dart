@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-import '../core/formatos.dart';
-import '../core/tema.dart';
 import 'package:quarto_core/quarto_core.dart';
+import '../core/tema.dart';
 
 /// Controla o visualizador de mídia no nível do aplicativo.
 ///
@@ -207,7 +206,7 @@ class _PlayerVideoState extends State<PlayerVideo> {
                     fit: StackFit.expand,
                     children: [
                       Image.asset(
-                        widget.midia.poster ?? 'assets/img/act1.jpg',
+                        widget.midia.poster ?? MidiaPadrao.capaVideo,
                         fit: BoxFit.cover,
                       ),
                       ColoredBox(color: Colors.black.withValues(alpha: 0.35)),

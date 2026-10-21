@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   quarto_core:
     path: ../pacotes/quarto_core
+  quarto_ui:
+    path: ../pacotes/quarto_ui
   flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.8

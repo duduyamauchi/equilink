@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quarto_ui/quarto_ui.dart';
 
 /// Paleta do painel administrativo: mesma família visual do aplicativo do
 /// usuário, com fundo mais neutro para leitura intensa de dados.
@@ -116,3 +117,22 @@ ThemeData construirTemaAdmin() {
     ),
   );
 }
+
+
+/// Paleta do painel administrativo, no formato das primitivas compartilhadas.
+const paletaDoPainel = PaletaUi(
+  superficie: AdminCores.superficie,
+  superficieSuave: AdminCores.superficieSuave,
+  borda: AdminCores.borda,
+  texto: AdminCores.texto,
+  textoSecundario: AdminCores.textoSecundario,
+  destaque: AdminCores.dourado,
+  verde: AdminCores.verde,
+  verdeFundo: AdminCores.verdeFundo,
+  ambar: AdminCores.ambar,
+  ambarFundo: AdminCores.ambarFundo,
+  vermelho: AdminCores.vermelho,
+  vermelhoFundo: AdminCores.vermelhoFundo,
+  raioMedio: AdminRaios.medio,
+  raioPequeno: AdminRaios.pequeno,
+);
