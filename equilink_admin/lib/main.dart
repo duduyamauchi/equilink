@@ -4,6 +4,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:equilink_core/equilink_core.dart';
 
 import 'core/analytics_painel.dart';
+import 'core/inatividade.dart';
 import 'telas/login.dart';
 import 'core/escopo.dart';
 import 'core/tema.dart';
@@ -49,6 +50,11 @@ class _PainelAppState extends State<PainelApp> {
   /// Motivo exibido na tela de login (ex.: sessão expirada).
   String? _motivoLogin;
 
+  /// Encerra a sessão depois de 1 h sem atividade.
+  late final VigiaInatividade _vigia = VigiaInatividade()
+    ..aoExpirar = _expirarPorInatividade
+    ..aoAvisar = _avisarInatividade;
+
 
   @override
   void initState() {
@@ -85,6 +91,7 @@ class _PainelAppState extends State<PainelApp> {
       return;
     }
     setState(() => _sessao = sessao);
+    _vigia.iniciar();
     _repositorio.carregar();
     _carregarTelemetria();
   }
@@ -111,6 +118,7 @@ class _PainelAppState extends State<PainelApp> {
   /// Chamado quando a FonteHttp recebe 401: a sessão morreu no servidor.
   void _sessaoExpirou() {
     if (!mounted || _sessao == null) return;
+    _vigia.parar();
     setState(() {
       _sessao = null;
       _motivoLogin = 'Sua sessão expirou. Entre de novo.';
@@ -123,10 +131,29 @@ class _PainelAppState extends State<PainelApp> {
       _sessao = sessao;
       _motivoLogin = null;
     });
+    _vigia.iniciar();
     _repositorio.carregar();
   }
 
+  /// O prazo estourou: encerra a sessão também no servidor.
+  Future<void> _expirarPorInatividade() async {
+    await _sessaoApi?.sair();
+    if (!mounted) return;
+    setState(() {
+      _sessao = null;
+      _motivoLogin =
+          'Sessão encerrada por inatividade (${_vigia.limiteEmTexto} sem uso). Entre de novo.';
+    });
+  }
+
+  /// Faltando pouco para expirar, avisa e deixa o operador continuar.
+  void _avisarInatividade() {
+    if (!mounted || _sessao == null) return;
+    setState(() {});
+  }
+
   Future<void> _sair() async {
+    _vigia.parar();
     await _sessaoApi?.sair();
     if (!mounted) return;
     setState(() {
@@ -137,6 +164,7 @@ class _PainelAppState extends State<PainelApp> {
 
   @override
   void dispose() {
+    _vigia.dispose();
     _roteador.dispose();
     _analytics.dispose();
     super.dispose();
@@ -159,15 +187,31 @@ class _PainelAppState extends State<PainelApp> {
             repositorio: _repositorio,
             child: ListenableBuilder(
               listenable: _repositorio,
-              builder: (context, _) => _Portao(
-                rep: _repositorio,
-                sessaoApi: _sessaoApi,
-                sessao: _sessao,
-                motivoLogin: _motivoLogin,
-                aoEntrar: _aposEntrar,
-                aoSair: _sair,
-                aoExpirar: _sessaoExpirou,
-                child: child ?? const SizedBox.shrink(),
+              builder: (context, _) => AreaDeAtividade(
+                vigia: _vigia,
+                child: ListenableBuilder(
+                  listenable: _vigia,
+                  builder: (context, _) => Stack(
+                    children: [
+                      _Portao(
+                        rep: _repositorio,
+                        sessaoApi: _sessaoApi,
+                        sessao: _sessao,
+                        motivoLogin: _motivoLogin,
+                        aoEntrar: _aposEntrar,
+                        aoSair: _sair,
+                        aoExpirar: _sessaoExpirou,
+                        child: child ?? const SizedBox.shrink(),
+                      ),
+                      if (_vigia.avisando && _sessao != null)
+                        _AvisoInatividade(
+                          restante: _vigia.restante,
+                          aoContinuar: _vigia.prorrogar,
+                          aoSair: _sair,
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -351,6 +395,86 @@ class _ComSessao extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Aviso de inatividade: aparece faltando 2 minutos e deixa continuar.
+///
+/// Sem ele, o operador perdia o que estava digitando quando a sessão caísse.
+class _AvisoInatividade extends StatelessWidget {
+  const _AvisoInatividade({
+    required this.restante,
+    required this.aoContinuar,
+    required this.aoSair,
+  });
+
+  final Duration restante;
+  final VoidCallback aoContinuar;
+  final Future<void> Function() aoSair;
+
+  @override
+  Widget build(BuildContext context) {
+    final minutos = restante.inMinutes;
+    final segundos = restante.inSeconds % 60;
+    final falta = minutos > 0
+        ? '${minutos}min ${segundos.toString().padLeft(2, '0')}s'
+        : '${segundos}s';
+
+    return Positioned(
+      bottom: 16,
+      left: 16,
+      right: 16,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Material(
+            color: AdminCores.barra,
+            borderRadius: BorderRadius.circular(AdminRaios.medio),
+            elevation: 6,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+              child: Row(
+                children: [
+                  const Icon(Icons.timer_outlined, size: 18, color: Colors.white70),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Sessão por expirar',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Sem atividade, você será desconectado em $falta.',
+                          style: const TextStyle(fontSize: 11.5, color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: aoSair,
+                    style: TextButton.styleFrom(foregroundColor: Colors.white60),
+                    child: const Text('Sair'),
+                  ),
+                  const SizedBox(width: 4),
+                  FilledButton(
+                    onPressed: aoContinuar,
+                    child: const Text('Continuar conectado'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

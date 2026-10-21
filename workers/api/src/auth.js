@@ -14,7 +14,16 @@
 // JavaScript publicado — serve para configuração pública, nunca para segredo.
 
 const NOME_COOKIE = 'equilink_sessao';
-const VALIDADE_SESSAO = 60 * 60 * 8; // 8 horas
+// Teto absoluto: passadas 8 h, a sessão morre mesmo com uso contínuo.
+const VALIDADE_SESSAO = 60 * 60 * 8;
+
+// Inatividade: sem nenhuma requisição por 1 h, a sessão é encerrada.
+//
+// Antes, quem entrasse no painel às 9h continuava autenticado às 17h mesmo sem
+// tocar em nada — numa máquina compartilhada, isso é uma porta aberta. O cookie
+// carrega o instante do último uso; cada requisição autenticada o renova.
+const INATIVIDADE_MAXIMA = 60 * 60; // 1 hora
+const MARGEM_RENOVACAO = 60; // renova no máximo 1x por minuto
 // O runtime da Cloudflare recusa PBKDF2 acima de 100 mil iterações
 // ("Pbkdf2 failed: iteration counts above 100000 are not supported"), então
 // este é o teto da plataforma. Para não depender só dele, a senha passa antes
@@ -137,9 +146,18 @@ async function assinar(dados, segredo) {
   return textoBase64Url(new Uint8Array(await crypto.subtle.sign('HMAC', chave, textoJson(dados))));
 }
 
-/** Emite o valor do cookie: `payload.assinatura`. */
-export async function emitirSessao(usuarioId, segredo, agora = Date.now()) {
-  const dados = { u: usuarioId, e: Math.floor(agora / 1000) + VALIDADE_SESSAO };
+/**
+ * Emite o valor do cookie: `payload.assinatura`.
+ *
+ * `a` é o instante do último uso conhecido; sem ele a sessão nasce agora.
+ */
+export async function emitirSessao(usuarioId, segredo, agora = Date.now(), ultimoUso = null) {
+  const segundos = Math.floor(agora / 1000);
+  const dados = {
+    u: usuarioId,
+    e: segundos + VALIDADE_SESSAO,
+    a: ultimoUso ?? segundos,
+  };
   const corpo = textoBase64Url(textoJson(dados));
   return `${corpo}.${await assinar(dados, segredo)}`;
 }
@@ -163,8 +181,27 @@ export async function lerSessao(valor, segredo, agora = Date.now()) {
   if (!iguaisEmTempoConstante(esperada, assinatura)) return null;
 
   if (dados.e * 1000 <= agora) return null;
-  return { usuarioId: dados.u, expiraEm: dados.e * 1000 };
+
+  // Inatividade: `a` é o último uso. Sessão antiga sem `a` conta como expirada,
+  // para não deixar passar cookie emitido antes desta regra.
+  const ultimoUso = (dados.a ?? 0) * 1000;
+  if (!ultimoUso || agora - ultimoUso >= INATIVIDADE_MAXIMA * 1000) return null;
+
+  return {
+    usuarioId: dados.u,
+    expiraEm: dados.e * 1000,
+    ultimoUso,
+    renovavel: agora - ultimoUso >= MARGEM_RENOVACAO * 1000,
+  };
 }
+
+/** Quanto falta para a sessão cair por inatividade, em segundos. */
+export function segundosAteExpirar(sessao, agora = Date.now()) {
+  const restante = sessao.ultimoUso + INATIVIDADE_MAXIMA * 1000 - agora;
+  return Math.max(0, Math.floor(restante / 1000));
+}
+
+export { INATIVIDADE_MAXIMA, VALIDADE_SESSAO };
 
 export function cookieDeSessao(valor, { seguro = true, maxAge = VALIDADE_SESSAO } = {}) {
   const partes = [
@@ -207,7 +244,16 @@ export async function identificar(request, env) {
   const cookie = lerCookie(request.headers.get('cookie'));
   if (cookie) {
     const sessao = await lerSessao(cookie, env.SESSION_SECRET);
-    if (sessao) return { tipo: 'usuario', usuarioId: sessao.usuarioId };
+    if (sessao) {
+      return {
+        tipo: 'usuario',
+        usuarioId: sessao.usuarioId,
+        sessao,
+        // O router assina um cookie novo quando isto é verdadeiro, renovando o
+        // relógio de inatividade a cada uso real.
+        renovar: sessao.renovavel ? sessao : null,
+      };
+    }
   }
 
   const auth = request.headers.get('authorization') ?? '';

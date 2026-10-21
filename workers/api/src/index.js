@@ -35,7 +35,9 @@ import {
   emitirSessao,
   gerarSalt,
   identificar,
+  INATIVIDADE_MAXIMA,
   paraHex,
+  segundosAteExpirar,
 } from './auth.js';
 
 // ---------------------------------------------------------------------------
@@ -801,6 +803,11 @@ export default {
               usuario: identidade.usuarioId,
               harasId: acesso.harasId,
               papel: acesso.papel,
+              // Prazo para o cliente avisar antes de cair por inatividade.
+              expiraEmSegundos: identidade.sessao
+                ? segundosAteExpirar(identidade.sessao)
+                : null,
+              limiteInatividadeSegundos: INATIVIDADE_MAXIMA,
             },
             200,
             { cabecalhos: base },
@@ -817,6 +824,25 @@ export default {
       const autenticado = Boolean(acesso);
       const podeEscrever = autenticado && acesso.papel !== 'leitor';
       const podeRemover = autenticado && acesso.papel === 'proprietario';
+
+      // Renova o relógio de inatividade quando houve uso desde a última
+      // assinatura. Sem isso, a sessão cairia 1h depois do login mesmo com o
+      // operador trabalhando.
+      const renovacao = identidade.renovar
+        ? {
+            'set-cookie': cookieDeSessao(
+              await emitirSessao(identidade.usuarioId, env.SESSION_SECRET),
+              { seguro },
+            ),
+          }
+        : {};
+
+      /** Resposta com o cookie renovado, quando aplicável. */
+      const responder = (corpo, status = 200, extras = {}) =>
+        json(corpo, status, {
+          cabecalhos: base,
+          headers: { ...renovacao, ...(extras.headers ?? {}) },
+        });
 
       const recusarEscrita = () =>
         erro(

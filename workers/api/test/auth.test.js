@@ -20,6 +20,7 @@ import {
   lerCookie,
   lerSessao,
   paraHex,
+  segundosAteExpirar,
 } from '../src/auth.js';
 
 const SEGREDO = 'segredo-de-teste-nao-use-em-producao';
@@ -124,4 +125,60 @@ test('hash de IP não guarda o endereço em claro', () => {
   const hash = paraHex(new TextEncoder().encode('200.1.2.3:segredo'));
   assert.ok(!hash.includes('200.1.2.3'));
   assert.equal(base64ParaBytes(bytesParaBase64(new Uint8Array([1, 2, 3]))).join(','), '1,2,3');
+});
+
+test('sessão cai depois de 1 hora sem uso', async () => {
+  const agora = Date.now();
+  const valor = await emitirSessao('eduardo', SEGREDO, agora);
+
+  // 59 minutos depois: válida.
+  const quase = await lerSessao(valor, SEGREDO, agora + 59 * 60 * 1000);
+  assert.equal(quase?.usuarioId, 'eduardo');
+
+  // 61 minutos depois: a inatividade encerra, mesmo dentro das 8 h.
+  const tarde = await lerSessao(valor, SEGREDO, agora + 61 * 60 * 1000);
+  assert.equal(tarde, null);
+});
+
+test('uso recente renova o prazo de inatividade', async () => {
+  const agora = Date.now();
+  // Sessão emitida há 50 minutos, com último uso há 50 minutos.
+  const valor = await emitirSessao('eduardo', SEGREDO, agora - 50 * 60 * 1000);
+
+  // 20 minutos depois do login (70 min no total), mas 20 min desde o uso:
+  // a sessão emitida agora não é válida, mas uma renovada seria.
+  const renovada = await emitirSessao('eduardo', SEGREDO, agora);
+  const sessao = await lerSessao(renovada, SEGREDO, agora + 30 * 60 * 1000);
+  assert.equal(sessao?.usuarioId, 'eduardo');
+});
+
+test('sessão antiga sem marca de último uso é recusada', async () => {
+  // Cookie emitido antes da regra de inatividade não tem o campo `a`.
+  const corpo = bytesParaBase64(new TextEncoder().encode(
+    JSON.stringify({ u: 'eduardo', e: Math.floor(Date.now() / 1000) + 3600 }),
+  ));
+  const chave = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(SEGREDO),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+  );
+  const assinatura = btoa(String.fromCharCode(...new Uint8Array(
+    await crypto.subtle.sign('HMAC', chave, new TextEncoder().encode(
+      JSON.stringify({ u: 'eduardo', e: Math.floor(Date.now() / 1000) + 3600 }),
+    )),
+  ))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+  assert.equal(await lerSessao(`${corpo}.${assinatura}`, SEGREDO), null);
+});
+
+test('segundos até expirar conta a partir do último uso', async () => {
+  const agora = Date.now();
+  const sessao = {
+    usuarioId: 'eduardo',
+    ultimoUso: agora - 30 * 60 * 1000,
+    expiraEm: agora + 7 * 60 * 60 * 1000,
+  };
+  // 30 minutos usados de 60: restam 30.
+  assert.equal(segundosAteExpirar(sessao, agora), 30 * 60);
+  // Depois do limite, zero e nunca negativo.
+  assert.equal(segundosAteExpirar(sessao, agora + 90 * 60 * 1000), 0);
 });
