@@ -68,6 +68,14 @@ ThemeData construirTema() {
       displayColor: Cores.texto,
     ),
     primaryTextTheme: base.primaryTextTheme.apply(fontFamily: familia),
+    // Alvo mínimo de toque: 44 px é o recomendado; o padrão do Material deixa
+    // botões de ícone com 40 px quando dentro de AppBar.
+    iconButtonTheme: IconButtonThemeData(
+      style: ButtonStyle(
+        minimumSize: const WidgetStatePropertyAll(Size(44, 44)),
+        tapTargetSize: MaterialTapTargetSize.padded,
+      ),
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: Cores.escuro,
       foregroundColor: Colors.white,

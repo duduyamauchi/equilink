@@ -73,7 +73,9 @@ class _Aba extends StatelessWidget {
           onTap: aoTocar,
           borderRadius: BorderRadius.circular(Raios.pequeno - 2),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+            // 10+10 com texto de 13 px dava 39 px de altura: abaixo do mínimo
+            // de 44 para toque em celular.
+            padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 6),
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Row(
