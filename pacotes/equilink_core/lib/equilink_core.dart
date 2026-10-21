@@ -22,4 +22,6 @@ export 'src/formatos.dart';
 export 'src/fonte_memoria.dart';
 export 'src/modelos.dart';
 export 'src/sessao.dart';
+export 'src/sugestoes/modelos.dart';
+export 'src/sugestoes/sugestoes_api.dart';
 export 'src/repositorio.dart';

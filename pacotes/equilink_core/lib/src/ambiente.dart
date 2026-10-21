@@ -3,6 +3,7 @@ import 'fonte_dados.dart';
 import 'fonte_http.dart';
 import 'fonte_memoria.dart';
 import 'sessao.dart';
+import 'sugestoes/sugestoes_api.dart';
 
 /// Configuração de ambiente do aplicativo.
 ///
@@ -72,6 +73,12 @@ abstract final class Ambiente {
       default:
         return ColetorMemoria();
     }
+  }
+
+  /// Cliente de sugestões, quando há backend. `null` em demonstração.
+  static SugestoesApi? criarSugestoes() {
+    if (fonte != 'http' || api.isEmpty) return null;
+    return SugestoesApi(base: api);
   }
 
   /// Cliente de sessão, quando a fonte é `http`. `null` sem backend.

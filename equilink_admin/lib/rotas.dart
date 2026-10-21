@@ -10,6 +10,7 @@ import 'telas/editor.dart';
 import 'telas/fonte.dart';
 import 'telas/painel.dart';
 import 'telas/provas.dart';
+import 'widgets/sugestoes.dart';
 
 /// Rotas do painel administrativo.
 abstract final class RotasAdmin {
@@ -80,14 +81,24 @@ const _itens = <_Item>[
 
 /// Moldura do painel: barra lateral fixa em telas largas, gaveta em telas
 /// estreitas.
-class _Moldura extends StatelessWidget {
+class _Moldura extends StatefulWidget {
   const _Moldura({required this.rotaAtual, required this.child});
 
   final String rotaAtual;
   final Widget child;
 
   @override
+  State<_Moldura> createState() => _MolduraState();
+}
+
+class _MolduraState extends State<_Moldura> {
+  /// Painel de sugestões aberto.
+  bool _sugestoesAbertas = false;
+
+  @override
   Widget build(BuildContext context) {
+    final rotaAtual = widget.rotaAtual;
+    final child = widget.child;
     final rep = AdminEscopo.de(context);
     final largura = MediaQuery.sizeOf(context).width;
     final usarGaveta = largura < 860;
@@ -126,7 +137,32 @@ class _Moldura extends StatelessWidget {
               ),
             ),
           ),
-        Expanded(child: child),
+        Expanded(
+          child: Stack(
+            children: [
+              Positioned.fill(child: child),
+              if (!_sugestoesAbertas)
+                Positioned(
+                  right: 20,
+                  bottom: 20,
+                  child: _BotaoSugestoes(
+                    aoTocar: () => setState(() => _sugestoesAbertas = true),
+                  ),
+                ),
+              if (_sugestoesAbertas)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: PainelSugestoes(
+                    rota: rotaAtual,
+                    aberto: true,
+                    aoAlternar: () => setState(() => _sugestoesAbertas = false),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ],
     );
 
@@ -170,6 +206,47 @@ class _Moldura extends StatelessWidget {
           ),
           Expanded(child: conteudo),
         ],
+      ),
+    );
+  }
+}
+
+/// Botão que abre as sugestões da página atual.
+///
+/// Fica no canto de todas as páginas: o cliente anota a ideia no momento em que
+/// ela surge, sem procurar onde escrever.
+class _BotaoSugestoes extends StatelessWidget {
+  const _BotaoSugestoes({required this.aoTocar});
+
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AdminCores.barra,
+      borderRadius: BorderRadius.circular(999),
+      elevation: 4,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: aoTocar,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.lightbulb_outline, size: 17, color: AdminCores.douradoClaro),
+              const SizedBox(width: 8),
+              const Text(
+                'Sugestões',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

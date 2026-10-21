@@ -944,6 +944,17 @@ export default {
         return json({ recebidos }, 201, { cabecalhos: base });
       }
 
+      // -------------------------------------------------------------------
+      // Sugestões do cliente, por página do painel
+      // -------------------------------------------------------------------
+
+      if (partes[0] === 'sugestoes') {
+        if (!autenticado) {
+          return erro('Autenticação necessária.', 401, { cabecalhos: base });
+        }
+        return rotaSugestoes({ request, url, sql, acesso, base, partes, identidade });
+      }
+
       // /cavalos/:id
       if (partes[0] === 'cavalos' && partes[1]) {
         const id = identificador(decodeURIComponent(partes[1]), 'id');
@@ -1271,4 +1282,179 @@ function normalizarBaia(bruto, numeroForcado) {
       texto: texto(v?.texto, 'observacao.texto', { max: 2000, obrigatorio: true }),
     })),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Sugestões do cliente
+//
+// O cliente anota o que quer em cada página; quem implementa (pessoa ou agente)
+// lê a fila. Cada mudança grava um instantâneo em `sugestoes_historico`, então
+// o cliente vê o próprio histórico e nada se perde ao apagar.
+// ---------------------------------------------------------------------------
+
+const STATUS_SUGESTAO = ['aberta', 'em_andamento', 'implementada', 'recusada'];
+const PRIORIDADES_SUGESTAO = ['baixa', 'normal', 'alta'];
+
+/** Uma linha do banco no formato que o cliente Dart espera. */
+const paraSugestao = (l) => ({
+  id: l.id,
+  rota: l.rota,
+  referencia: l.referencia ?? null,
+  titulo: l.titulo,
+  texto: l.texto,
+  status: l.apagada_em ? 'apagada' : l.status,
+  prioridade: l.prioridade,
+  versao: l.versao,
+  criadoEm: l.criado_em instanceof Date ? l.criado_em.toISOString() : l.criado_em,
+  atualizadoEm: l.atualizado_em instanceof Date ? l.atualizado_em.toISOString() : l.atualizado_em,
+  usuario: l.usuario_id,
+});
+
+/** Grava um instantâneo do estado atual no histórico. */
+async function registrarVersao(sql, sugestao, acao, autor) {
+  await sql`
+    insert into sugestoes_historico
+      (sugestao_id, versao, acao, titulo, texto, status, prioridade, referencia, rota, autor)
+    values (${sugestao.id}, ${sugestao.versao}, ${acao}, ${sugestao.titulo}, ${sugestao.texto},
+            ${acao === 'apagada' ? 'apagada' : sugestao.status}, ${sugestao.prioridade},
+            ${sugestao.referencia ?? null}, ${sugestao.rota}, ${autor})
+  `;
+}
+
+async function rotaSugestoes({ request, url, sql, acesso, base, partes, identidade }) {
+  const autor = identidade.usuarioId;
+  const responder = (corpo, status = 200) => json(corpo, status, { cabecalhos: base });
+
+  // GET /sugestoes?rota=/cavalos&apagadas=1
+  if (!partes[1] && request.method === 'GET') {
+    const rota = url.searchParams.get('rota');
+    const incluirApagadas = url.searchParams.get('apagadas') === '1';
+    const linhas = await sql`
+      select * from sugestoes
+      where haras_id = ${acesso.harasId}
+        and usuario_id = ${autor}
+        ${rota ? sql`and rota = ${rota}` : sql``}
+        ${incluirApagadas ? sql`` : sql`and apagada_em is null`}
+      order by atualizado_em desc
+      limit 500
+    `;
+    return responder({ sugestoes: linhas.map(paraSugestao) });
+  }
+
+  // POST /sugestoes
+  if (!partes[1] && request.method === 'POST') {
+    const corpo = await lerJson(request);
+    const rota = texto(corpo.rota, 'rota', { max: 200, obrigatorio: true });
+    const titulo = texto(corpo.titulo, 'titulo', { max: 160, obrigatorio: true });
+    const descricao = texto(corpo.texto, 'texto', { max: 8000, obrigatorio: true });
+    const referencia = texto(corpo.referencia, 'referencia', { max: 300 }) || null;
+    const prioridade = PRIORIDADES_SUGESTAO.includes(corpo.prioridade)
+      ? corpo.prioridade
+      : 'normal';
+
+    const linhas = await sql`
+      insert into sugestoes
+        (haras_id, usuario_id, rota, referencia, titulo, texto, prioridade)
+      values (${acesso.harasId}, ${autor}, ${rota}, ${referencia}, ${titulo},
+              ${descricao}, ${prioridade})
+      returning *
+    `;
+    await registrarVersao(sql, linhas[0], 'criada', autor);
+    return responder(paraSugestao(linhas[0]), 201);
+  }
+
+  // /sugestoes/:id
+  if (partes[1]) {
+    const id = identificador(decodeURIComponent(partes[1]), 'id');
+    const existentes = await sql`
+      select * from sugestoes
+      where id = ${id} and haras_id = ${acesso.harasId} and usuario_id = ${autor}
+    `;
+    const atual = existentes[0];
+    if (!atual) return erro('Sugestão não encontrada.', 404, { cabecalhos: base });
+
+    // GET /sugestoes/:id/historico
+    if (partes[2] === 'historico' && request.method === 'GET') {
+      const versoes = await sql`
+        select versao, acao, titulo, texto, status, prioridade, referencia, rota, autor, quando
+        from sugestoes_historico
+        where sugestao_id = ${id}
+        order by versao desc, quando desc
+      `;
+      return responder({
+        versoes: versoes.map((v) => ({
+          ...v,
+          quando: v.quando instanceof Date ? v.quando.toISOString() : v.quando,
+        })),
+      });
+    }
+
+    // PUT /sugestoes/:id — edita conteúdo
+    if (request.method === 'PUT') {
+      const corpo = await lerJson(request);
+      const titulo = corpo.titulo == null
+        ? atual.titulo
+        : texto(corpo.titulo, 'titulo', { max: 160, obrigatorio: true });
+      const descricao = corpo.texto == null
+        ? atual.texto
+        : texto(corpo.texto, 'texto', { max: 8000, obrigatorio: true });
+      const referencia = corpo.referencia === undefined
+        ? atual.referencia
+        : texto(corpo.referencia, 'referencia', { max: 300 }) || null;
+      const prioridade = PRIORIDADES_SUGESTAO.includes(corpo.prioridade)
+        ? corpo.prioridade
+        : atual.prioridade;
+
+      const mudou =
+        titulo !== atual.titulo ||
+        descricao !== atual.texto ||
+        referencia !== atual.referencia ||
+        prioridade !== atual.prioridade;
+      if (!mudou) return responder(paraSugestao(atual));
+
+      const linhas = await sql`
+        update sugestoes
+        set titulo = ${titulo}, texto = ${descricao}, referencia = ${referencia},
+            prioridade = ${prioridade}, versao = versao + 1, atualizado_em = now()
+        where id = ${id} and haras_id = ${acesso.harasId}
+        returning *
+      `;
+      await registrarVersao(sql, linhas[0], 'editada', autor);
+      return responder(paraSugestao(linhas[0]));
+    }
+
+    // PATCH /sugestoes/:id — só a situação
+    if (request.method === 'PATCH') {
+      const corpo = await lerJson(request);
+      if (!STATUS_SUGESTAO.includes(corpo.status)) {
+        return erro('Situação inválida.', 400, { cabecalhos: base });
+      }
+      if (corpo.status === atual.status && !atual.apagada_em) {
+        return responder(paraSugestao(atual));
+      }
+      const linhas = await sql`
+        update sugestoes
+        set status = ${corpo.status}, versao = versao + 1, atualizado_em = now()
+        where id = ${id} and haras_id = ${acesso.harasId}
+        returning *
+      `;
+      await registrarVersao(sql, linhas[0], 'status', autor);
+      return responder(paraSugestao(linhas[0]));
+    }
+
+    // DELETE /sugestoes/:id — exclusão lógica, histórico preservado
+    if (request.method === 'DELETE') {
+      if (atual.apagada_em) return new Response(null, { status: 204, headers: base });
+      const linhas = await sql`
+        update sugestoes
+        set apagada_em = now(), versao = versao + 1, atualizado_em = now()
+        where id = ${id} and haras_id = ${acesso.harasId}
+        returning *
+      `;
+      await registrarVersao(sql, linhas[0], 'apagada', autor);
+      return new Response(null, { status: 204, headers: base });
+    }
+  }
+
+  return erro('Rota de sugestões não encontrada.', 404, { cabecalhos: base });
 }
