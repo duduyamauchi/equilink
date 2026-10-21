@@ -7,7 +7,7 @@ import '../core/tema.dart';
 import '../rotas.dart';
 import '../widgets/comuns.dart';
 
-/// Visão consolidada do histórico esportivo de todo o plantel.
+/// Visão consolidada do histórico esportivo de todos os cavalos.
 class TelaProvas extends StatefulWidget {
   const TelaProvas({super.key});
 
@@ -72,7 +72,7 @@ class _TelaProvasState extends State<TelaProvas> {
                 ),
                 Indicador(
                   valor: melhor == null ? '—' : '${melhor.toStringAsFixed(3).replaceAll('.', ',')}s',
-                  rotulo: 'Melhor tempo do plantel',
+                  rotulo: 'Melhor tempo dos meus cavalos',
                   icone: Icons.timer_outlined,
                 ),
               ],

@@ -8,7 +8,7 @@ import '../escopo.dart';
 import '../rotas.dart';
 import '../widgets/comuns.dart';
 
-/// Tela "Gestão das Baias (Haras)": visão das baias, manejo consolidado do dia
+/// Tela "Meus cavalos": visão das baias, manejo consolidado do dia
 /// e relatórios gerenciais.
 class TelaBaias extends StatefulWidget {
   const TelaBaias({super.key});
@@ -26,7 +26,7 @@ class _TelaBaiasState extends State<TelaBaias> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestão das Baias (Haras)'),
+        title: const Text('Meus cavalos'),
         leading: IconButton(
           tooltip: 'Placa de identificação',
           icon: const Icon(Icons.qr_code_2, size: 24),
@@ -123,7 +123,7 @@ class _TelaBaiasState extends State<TelaBaias> {
           content: Text(
             repositorio.cavalos.isEmpty
                 ? 'Cadastre um animal antes de criar a baia.'
-                : 'Todos os animais do plantel já possuem baia.',
+                : 'Todos os seus cavalos já possuem baia.',
           ),
         ),
       );
@@ -485,7 +485,7 @@ class _ItemManejo extends StatelessWidget {
   }
 }
 
-/// Aba "Relatórios": indicadores do haras, consumo estimado e ocupação.
+/// Aba "Relatórios": indicadores dos cavalos, consumo estimado e ocupação.
 class _AbaRelatorios extends StatelessWidget {
   const _AbaRelatorios({required this.repositorio});
 
@@ -644,7 +644,7 @@ class _AbaRelatorios extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const TituloSecao('Indicadores do haras'),
+              const TituloSecao('Indicadores dos meus cavalos'),
               const SizedBox(height: Espacos.x4),
               Wrap(
                 spacing: Espacos.x4,

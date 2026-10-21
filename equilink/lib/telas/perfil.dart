@@ -59,7 +59,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
                   ),
                   const SizedBox(height: Espacos.x2),
                   const Text(
-                    'Confira o registro na placa ou abra o perfil do destaque do haras.',
+                    'Confira o registro na placa ou abra o perfil em destaque.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 12.5, color: Cores.textoSecundario, height: 1.5),
                   ),
@@ -69,7 +69,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
                       repositorio.limparFoco();
                       context.go(Rotas.perfil);
                     },
-                    child: const Text('Ver o destaque do haras'),
+                    child: const Text('Ver o perfil em destaque'),
                   ),
                 ],
               ),
@@ -249,7 +249,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
                       const SizedBox(height: Espacos.x3),
                       _LinhaContato(
                         icone: Icons.agriculture_outlined,
-                        rotulo: 'Haras',
+                        rotulo: 'Criador',
                         valor: cavalo.criador.nome,
                       ),
                       _LinhaContato(

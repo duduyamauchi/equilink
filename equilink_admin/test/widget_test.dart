@@ -72,14 +72,14 @@ void main() {
 
   _importacao();
 
-  testWidgets('histórico consolidado mostra as provas do plantel', (tester) async {
+  testWidgets('histórico consolidado mostra as provas dos cavalos', (tester) async {
     await abrirPainel(tester);
 
     await tester.tap(find.text('Provas'));
     await tester.pumpAndSettle();
 
     expect(find.text('Provas registradas'), findsOneWidget);
-    expect(find.text('Melhor tempo do plantel'), findsOneWidget);
+    expect(find.text('Melhor tempo dos meus cavalos'), findsOneWidget);
     expect(find.text('Três Tambores | Aberta'), findsWidgets);
   });
 }

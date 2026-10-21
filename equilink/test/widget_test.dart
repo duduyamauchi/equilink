@@ -251,7 +251,7 @@ void main() {
 
       expect(find.byType(InteractiveViewer), findsOneWidget);
       expect(find.text('Fotos e Vídeos'), findsOneWidget);
-      expect(find.text('Gestão das Baias (Haras)'), findsNothing);
+      expect(find.text('Meus cavalos'), findsNothing);
 
       // Fechar o visualizador devolve o controle da navegação.
       await tester.tap(find.byTooltip('Fechar'));
@@ -259,7 +259,7 @@ void main() {
       expect(find.byType(InteractiveViewer), findsNothing);
 
       await irPara(tester, 'Baias');
-      expect(find.text('Gestão das Baias (Haras)'), findsOneWidget);
+      expect(find.text('Meus cavalos'), findsOneWidget);
     });
   });
 
@@ -328,7 +328,7 @@ void main() {
       final rep = Repositorio(FonteMemoria());
       await rep.carregar();
 
-      // Sem foco, o app mostra o destaque do haras.
+      // Sem foco, o app mostra o perfil em destaque.
       final destaque = rep.cavalo!.registro;
       expect(rep.erroFoco, isNull);
 

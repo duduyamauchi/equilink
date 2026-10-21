@@ -6,7 +6,7 @@ import 'package:equilink_core/equilink_core.dart';
 ///
 /// O aplicativo é público: o visitante vê a vitrine sem entrar. O login existe
 /// para o proprietário ver o manejo das baias, que a API só entrega a quem tem
-/// acesso ao haras.
+/// acesso à conta do dono.
 class SessaoEscopo extends InheritedWidget {
   const SessaoEscopo({
     super.key,

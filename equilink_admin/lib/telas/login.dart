@@ -27,7 +27,7 @@ class TelaLogin extends StatelessWidget {
       aoEntrar: aoEntrar,
       motivo: motivo,
       titulo: 'Painel administrativo',
-      subtitulo: 'Acesso restrito ao haras.',
+      subtitulo: 'Acesso restrito à sua conta.',
     );
   }
 }

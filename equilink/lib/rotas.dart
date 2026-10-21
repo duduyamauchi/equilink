@@ -114,7 +114,7 @@ GoRouter criarRoteador([void Function(String rota)? aoNavegar]) {
         builder: (context, state) => const TelaAcesso(),
       ),
       // Alvo do QR Code da placa: /cavalo/<registro>. Redireciona para o
-      // perfil, que passa a exibir o animal pedido em vez do destaque do haras.
+      // perfil, que passa a exibir o animal pedido em vez do destaque.
       GoRoute(
         path: '/cavalo/:registro',
         parentNavigatorKey: chaveRaiz,
@@ -271,7 +271,7 @@ class _BarraLateral extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Haras Santa Helena',
+                          'Meus cavalos',
                           style: TextStyle(fontSize: 12, color: Colors.white60),
                         ),
                       ],

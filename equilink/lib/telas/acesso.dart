@@ -10,7 +10,7 @@ import '../widgets/comuns.dart';
 ///
 /// Diferente do painel, entrar aqui é **opcional**: o visitante continua vendo a
 /// vitrine. O login serve para o proprietário ver o manejo das baias, que a API
-/// só entrega a quem tem acesso ao haras.
+/// só entrega ao dono do animal.
 class TelaAcesso extends StatelessWidget {
   const TelaAcesso({super.key});
 
@@ -95,7 +95,7 @@ class _JaAutenticado extends StatelessWidget {
                   const SizedBox(height: Espacos.x3),
                   const Text(
                     'Você está vendo o manejo completo das baias, incluindo '
-                    'ocorrências e observações do haras.',
+                    'ocorrências e observações dos seus cavalos.',
                     style: TextStyle(fontSize: 12.5, color: Cores.textoSecundario, height: 1.5),
                   ),
                   const SizedBox(height: Espacos.x4),

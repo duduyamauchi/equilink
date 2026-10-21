@@ -95,7 +95,7 @@ class _CartaoCavalo extends StatelessWidget {
 
   /// Copia o animal com um registro novo.
   ///
-  /// O registro ABQM é único por haras no banco, e a cópia antiga mantinha o
+  /// O registro ABQM é único por conta no banco, e a cópia antiga mantinha o
   /// mesmo. A gravação falhava e o erro não aparecia: a cópia surgia na lista
   /// otimista e sumia no próximo carregamento. Agora o registro recebe sufixo
   /// e o operador é avisado se ainda assim falhar.

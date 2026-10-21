@@ -1584,7 +1584,7 @@ class AbaBaia extends StatelessWidget {
 
   Future<void> _novaOcorrencia(BuildContext context, Repositorio rep, Baia baia) async {
     final descricao = TextEditingController();
-    final responsavel = TextEditingController(text: 'Equipe do haras');
+    final responsavel = TextEditingController(text: 'Eu mesmo');
     var tipo = TipoOcorrencia.saude;
 
     final salvar = await showDialog<bool>(
@@ -1631,7 +1631,7 @@ class AbaBaia extends StatelessWidget {
 
   Future<void> _novaObservacao(BuildContext context, Repositorio rep, Baia baia) async {
     final texto = TextEditingController();
-    final autor = TextEditingController(text: 'Equipe do haras');
+    final autor = TextEditingController(text: 'Eu mesmo');
 
     final salvar = await showDialog<bool>(
       context: context,
@@ -1657,7 +1657,7 @@ class AbaBaia extends StatelessWidget {
     if (salvar != true || texto.text.trim().isEmpty) return;
     await rep.adicionarObservacao(
       baia.numero,
-      autor: autor.text.trim().isEmpty ? 'Equipe do haras' : autor.text.trim(),
+      autor: autor.text.trim().isEmpty ? 'Eu mesmo' : autor.text.trim(),
       texto: texto.text.trim(),
     );
   }

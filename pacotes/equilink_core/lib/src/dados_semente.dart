@@ -256,7 +256,7 @@ const _midias = <Midia>[
     id: 'm1',
     tipo: TipoMidia.foto,
     arquivo: '$caminhoImagens/hero.jpg',
-    legenda: 'Retrato oficial do plantel',
+    legenda: 'Retrato oficial',
     local: 'Haras Santa Helena',
   ),
   Midia(
@@ -724,7 +724,7 @@ List<Cavalo> plantelDeDemonstracao(Cavalo principal) {
           altura: alturas[id]!,
           peso: pesos[id]!,
           descricao:
-              'Animal do plantel do ${principal.proprietario.fazenda}, '
+              'Animal do ${principal.proprietario.fazenda}, '
               'mantido no mesmo manejo e acompanhamento sanitário do haras.',
           proprietario: principal.proprietario,
           criador: principal.criador,

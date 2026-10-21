@@ -7,7 +7,7 @@ import '../core/tema.dart';
 import '../rotas.dart';
 import '../widgets/comuns.dart';
 
-/// Visão geral do haras: indicadores, ocupação das baias e alertas.
+/// Visão geral dos cavalos: indicadores, ocupação das baias e alertas.
 class TelaPainel extends StatelessWidget {
   const TelaPainel({super.key});
 
@@ -26,7 +26,7 @@ class TelaPainel extends StatelessWidget {
       children: [
         CabecalhoSecao(
           titulo: 'Visão geral',
-          subtitulo: 'Situação do haras e do acervo em ${rep.fonte.descricao}',
+          subtitulo: 'Situação dos seus cavalos em ${rep.fonte.descricao}',
           icone: Icons.dashboard_outlined,
           acao: FilledButton.icon(
             onPressed: () => context.go(RotasAdmin.cavalos),

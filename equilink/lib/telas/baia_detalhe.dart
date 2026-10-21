@@ -30,7 +30,7 @@ class _TelaBaiaDetalheState extends State<TelaBaiaDetalhe> {
         body: const Vazio(
           icone: Icons.home_work_outlined,
           titulo: 'Baia não encontrada',
-          descricao: 'A baia pode ter sido removida da gestão do haras.',
+          descricao: 'A baia pode ter sido removida da sua gestão.',
         ),
       );
     }
@@ -208,7 +208,7 @@ class _TelaBaiaDetalheState extends State<TelaBaiaDetalhe> {
       builder: (context) => AlertDialog(
         title: const Text('Remover baia'),
         content: Text(
-          'A baia $numero ($nome) será removida da gestão do haras. '
+          'A baia $numero ($nome) será removida da sua gestão. '
           'O cadastro do animal permanece no aplicativo.',
         ),
         actions: [
@@ -746,7 +746,7 @@ class _AbaObservacoes extends StatelessWidget {
     if (confirmar != true || texto.text.trim().isEmpty) return;
     repositorio.adicionarObservacao(
       numero,
-      autor: autor.text.trim().isEmpty ? 'Equipe do haras' : autor.text.trim(),
+      autor: autor.text.trim().isEmpty ? 'Eu mesmo' : autor.text.trim(),
       texto: texto.text.trim(),
     );
     if (!context.mounted) return;

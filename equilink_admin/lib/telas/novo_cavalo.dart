@@ -461,7 +461,7 @@ class _TelaNovoCavaloState extends State<TelaNovoCavalo> {
     const SizedBox(height: 14),
     const Text(
       'O telefone do proprietário é privado: aparece só para quem tem acesso ao '
-      'haras, nunca no perfil público.',
+      'sua conta, nunca no perfil público.',
       style: TextStyle(fontSize: 11.5, color: AdminCores.textoSecundario, height: 1.4),
     ),
   ];

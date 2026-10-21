@@ -243,7 +243,7 @@ class _Carregando extends StatelessWidget {
             CircularProgressIndicator(strokeWidth: 2.6),
             SizedBox(height: Espacos.x4),
             Text(
-              'Carregando o haras...',
+              'Carregando os perfis...',
               style: TextStyle(fontSize: 14, color: Cores.textoSecundario),
             ),
           ],
