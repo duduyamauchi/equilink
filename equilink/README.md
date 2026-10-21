@@ -21,8 +21,10 @@ flutter build web --release --base-href=/ --no-web-resources-cdn \
 npx -y wrangler@latest deploy
 ```
 
-Sem `--base-href`, os arquivos são procurados na raiz do domínio
-(`duduyamauchi.github.io/`) e a página abre em branco.
+Sem `--base-href=/`, o Flutter procura os arquivos num caminho diferente da raiz
+e a página abre em branco.
+
+O GitHub Pages foi desativado: a publicação é feita só pelos Workers.
 
 ## Módulos
 

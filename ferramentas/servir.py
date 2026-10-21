@@ -87,8 +87,8 @@ def servir(diretorio: Path, porta: int, rotulo: str, base: str) -> ThreadingHTTP
     """Publica o build na raiz e, quando houver `base`, também sob esse caminho.
 
     O Flutter compilado com `--base-href=/x/` procura os arquivos em `/x/`, então
-    o build precisa ser alcançável nesse prefixo — é o que o GitHub Pages faz
-    naturalmente ao servir um repositório em subdiretório.
+    o build precisa ser alcançável nesse prefixo. Serve para reproduzir
+    localmente um site publicado sob subdiretório.
     """
     raiz = diretorio
     prefixo = base.strip("/")

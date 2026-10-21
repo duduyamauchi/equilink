@@ -44,7 +44,7 @@ node_modules/
 __pycache__/
 *.pyc
 
-# Publicação local (o script cria esta pasta com o build do Pages)
+# Publicação local opcional (cópia do build servida por ferramentas/servir.py)
 .paginas/
 .paginas2/
 
