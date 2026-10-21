@@ -23,8 +23,10 @@ Tabelas em `deploy/migracao_sugestoes.sql`.
 | `prioridade` | `baixa`, `normal`, `alta` |
 | `versao` | cresce a cada edição |
 
-Apagar é **exclusão lógica** (`apagada_em`): some da lista do cliente, o
-histórico permanece.
+Apagar é **exclusão lógica** (`apagada_em`): some da lista do cliente e não é
+oferecida a ele de volta. O registro e o histórico permanecem no banco para
+auditoria e para quem administra — `GET /sugestoes?apagadas=1` devolve esses
+registros, e a interface não pede.
 
 `sugestoes_historico` é append-only: um instantâneo por mudança, com autor e
 ação (`criada`, `editada`, `status`, `apagada`). É o "histórico do git" que o
@@ -34,7 +36,8 @@ cliente vê no botão de histórico.
 
 | Método | Rota | Efeito |
 | --- | --- | --- |
-| GET | `/sugestoes?rota=/cavalos&apagadas=1` | lista do usuário |
+| GET | `/sugestoes?rota=/cavalos` | lista do usuário (só as vivas) |
+| GET | `...&apagadas=1` | inclui as apagadas — para auditoria, não para a tela |
 | POST | `/sugestoes` | cria (`rota`, `titulo`, `texto`, `referencia?`, `prioridade?`) |
 | PUT | `/sugestoes/:id` | edita conteúdo, incrementa `versao` |
 | PATCH | `/sugestoes/:id` | muda só o `status` |

@@ -68,7 +68,8 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
       _erro = null;
     });
     try {
-      final lista = await api.listar(rota: widget.rota, incluirApagadas: true);
+      // Só as vivas: o cliente apagou, não deve reaparecer na lista.
+      final lista = await api.listar(rota: widget.rota);
       if (!mounted) return;
       setState(() {
         _sugestoes = lista;
@@ -154,7 +155,9 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Apagar sugestão'),
-        content: Text('"${s.titulo}" sai da sua lista. O histórico continua guardado.'),
+        content: Text(
+          '"${s.titulo}" será removida da sua lista e não pode ser recuperada por aqui.',
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
           FilledButton(
@@ -497,12 +500,12 @@ class _CartaoSugestao extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final apagada = sugestao.apagada;
     final (cor, fundo) = switch (sugestao.status) {
       StatusSugestao.aberta => (AdminCores.azul, AdminCores.azulFundo),
       StatusSugestao.emAndamento => (AdminCores.ambar, AdminCores.ambarFundo),
       StatusSugestao.implementada => (AdminCores.verde, AdminCores.verdeFundo),
       StatusSugestao.recusada => (AdminCores.vermelho, AdminCores.vermelhoFundo),
+      // `apagada` não chega aqui: a listagem não devolve sugestões apagadas.
       StatusSugestao.apagada => (AdminCores.textoSecundario, AdminCores.superficieSuave),
     };
 
@@ -526,8 +529,7 @@ class _CartaoSugestao extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
-                      color: apagada ? AdminCores.textoSecundario : AdminCores.texto,
-                      decoration: apagada ? TextDecoration.lineThrough : null,
+                      color: AdminCores.texto,
                     ),
                   ),
                 ),
@@ -541,7 +543,7 @@ class _CartaoSugestao extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11.5,
                 height: 1.45,
-                color: apagada ? AdminCores.textoSecundario : AdminCores.texto,
+                color: AdminCores.texto,
               ),
             ),
             const SizedBox(height: 6),
@@ -570,20 +572,18 @@ class _CartaoSugestao extends StatelessWidget {
                   style: const TextStyle(fontSize: 10, color: AdminCores.textoSecundario),
                 ),
                 const Spacer(),
-                if (!apagada) ...[
-                  IconButton(
-                    tooltip: 'Editar',
-                    onPressed: aoEditar,
-                    icon: const Icon(Icons.edit_outlined, size: 15),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  IconButton(
-                    tooltip: 'Apagar',
-                    onPressed: aoApagar,
-                    icon: const Icon(Icons.delete_outline, size: 15, color: AdminCores.vermelho),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
+                IconButton(
+                  tooltip: 'Editar',
+                  onPressed: aoEditar,
+                  icon: const Icon(Icons.edit_outlined, size: 15),
+                  visualDensity: VisualDensity.compact,
+                ),
+                IconButton(
+                  tooltip: 'Apagar',
+                  onPressed: aoApagar,
+                  icon: const Icon(Icons.delete_outline, size: 15, color: AdminCores.vermelho),
+                  visualDensity: VisualDensity.compact,
+                ),
                 IconButton(
                   tooltip: historicoAberto ? 'Ocultar histórico' : 'Ver histórico',
                   onPressed: aoVerHistorico,
