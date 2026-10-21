@@ -5,6 +5,7 @@ import 'core/escopo.dart';
 import 'core/tema.dart';
 import 'telas/analytics.dart';
 import 'telas/cavalos.dart';
+import 'telas/novo_cavalo.dart';
 import 'telas/editor.dart';
 import 'telas/fonte.dart';
 import 'telas/painel.dart';
@@ -20,6 +21,9 @@ abstract final class RotasAdmin {
 
   /// Editor de um cavalo específico (`/cavalos/<id>`).
   static String cavalo(String id) => '/cavalos/$id';
+
+  /// Assistente de cadastro, fora da lista para não colidir com `/cavalos/:id`.
+  static const novoCavalo = '/cavalos/novo';
 }
 
 GoRouter criarRoteadorAdmin() {
@@ -35,6 +39,10 @@ GoRouter criarRoteadorAdmin() {
             path: RotasAdmin.cavalos,
             builder: (context, state) => const TelaCavalos(),
             routes: [
+              GoRoute(
+                path: 'novo',
+                builder: (context, state) => const TelaNovoCavalo(),
+              ),
               GoRoute(
                 path: ':id',
                 builder: (context, state) =>

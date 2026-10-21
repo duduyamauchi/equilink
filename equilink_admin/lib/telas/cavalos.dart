@@ -80,70 +80,12 @@ class _TelaCavalosState extends State<TelaCavalos> {
     );
   }
 
-  /// Cria um animal em branco a partir do modelo do principal e abre o editor.
-  Future<void> _novo(BuildContext context, Repositorio rep) async {
-    final base = rep.cavalo;
-    if (base == null) return;
-
-    final nome = TextEditingController();
-    final registro = TextEditingController();
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Novo cavalo'),
-        content: SizedBox(
-          width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nome,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Nome'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: registro,
-                decoration: const InputDecoration(labelText: 'Registro ABQM'),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'O animal é criado com a ficha do haras já preenchida e abre no editor '
-                'para completar os dados.',
-                style: TextStyle(fontSize: 12, color: AdminCores.textoSecundario, height: 1.4),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Criar')),
-        ],
-      ),
-    );
-    if (confirmar != true || nome.text.trim().isEmpty) return;
-
-    final id = nome.text.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
-    final novo = base.copiarCom(
-      id: id.isEmpty ? rep.novoId('cavalo') : id,
-      nome: nome.text.trim().toUpperCase(),
-      registro: registro.text.trim().isEmpty ? 'SEM REGISTRO' : registro.text.trim().toUpperCase(),
-      principal: false,
-      provas: const [],
-      midias: const [],
-      descricao: 'Animal cadastrado pelo painel administrativo.',
-    );
-
-    final ok = await rep.salvarCavalo(novo);
-    if (!context.mounted) return;
-    if (ok) {
-      context.go(RotasAdmin.cavalo(novo.id));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(rep.erro ?? 'Não foi possível salvar.')),
-      );
-    }
-  }
+  /// Abre o assistente de cadastro.
+  ///
+  /// Antes, esta ação pedia nome e registro num diálogo e largava o operador no
+  /// editor com o resto da ficha vazia. O animal entrava incompleto e dependia
+  /// de quatro diálogos depois para ficar apresentável.
+  void _novo(BuildContext context, Repositorio rep) => context.push(RotasAdmin.novoCavalo);
 }
 
 class _CartaoCavalo extends StatelessWidget {

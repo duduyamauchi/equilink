@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:equilink_core/equilink_core.dart';
 
 import 'core/analytics_painel.dart';
@@ -9,6 +11,10 @@ import 'package:equilink_ui/equilink_ui.dart';
 import 'rotas.dart';
 
 void main() {
+  // URLs sem `#` no web. O Worker já serve o index.html para qualquer rota
+  // (not_found_handling: single-page-application), então `/cavalos/novo` abre o
+  // assistente direto em vez de cair na visão geral.
+  if (kIsWeb) usePathUrlStrategy();
   runApp(const PainelApp());
 }
 
