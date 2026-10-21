@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:quarto_core/quarto_core.dart';
 import '../core/tema.dart';
+import '../core/sessao_escopo.dart';
 import '../escopo.dart';
 import '../rotas.dart';
 import '../widgets/comuns.dart';
@@ -76,6 +77,7 @@ class _TelaBaiasState extends State<TelaBaias> {
                   ],
                 ),
                 const SizedBox(height: Espacos.x4),
+                const AvisoManejoPrivado(),
                 AbasPilula(
                   abas: const ['Baias', 'Manejo', 'Relatórios'],
                   selecionada: _aba,
@@ -293,6 +295,59 @@ class _AbaBaias extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Visitante anônimo: a API entrega as baias sem a rotina de manejo.
+///
+/// Sem este aviso a tela pareceria quebrada — todas as baias com "0 de 0" e
+/// nenhum registro de ocorrência. O texto diz o que falta e como ver.
+class AvisoManejoPrivado extends StatelessWidget {
+  const AvisoManejoPrivado({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final escopo = SessaoEscopo.de(context);
+    // Sem backend não há login; não faz sentido anunciar dado oculto.
+    if (escopo.sessaoApi == null) return const SizedBox.shrink();
+    if (escopo.podeVerManejo) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Espacos.x3),
+      child: Material(
+        color: Cores.ambarFundo,
+        borderRadius: BorderRadius.circular(Espacos.x2),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(Espacos.x2),
+          onTap: () => context.push(Rotas.acesso),
+          child: Padding(
+            padding: const EdgeInsets.all(Espacos.x3),
+            child: Row(
+              children: [
+                const Icon(Icons.lock_outline, size: 16, color: Cores.ambar),
+                const SizedBox(width: Espacos.x2),
+                const Expanded(
+                  child: Text(
+                    'O manejo das baias é privado. Entre como proprietário para '
+                    'ver a rotina, as ocorrências e as observações.',
+                    style: TextStyle(fontSize: 11.5, color: Cores.texto, height: 1.4),
+                  ),
+                ),
+                const SizedBox(width: Espacos.x2),
+                Text(
+                  'Entrar',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: Cores.ambar,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

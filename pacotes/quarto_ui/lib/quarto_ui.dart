@@ -6,5 +6,6 @@
 /// painel administrativo mantenham identidades visuais próprias.
 library;
 
+export 'src/acesso.dart';
 export 'src/paleta.dart';
 export 'src/primitivas.dart';

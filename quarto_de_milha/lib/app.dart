@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:quarto_core/quarto_core.dart';
 
+import 'core/sessao_escopo.dart';
 import 'core/tema.dart';
 import 'escopo.dart';
 import 'rotas.dart';
@@ -28,6 +29,12 @@ class _QuartoDeMilhaAppState extends State<QuartoDeMilhaApp> {
   final _visualizador = VisualizadorController();
   late final _roteador = criarRoteador(_registrarNavegacao);
 
+  /// Cliente de sessão; `null` no modo demonstração (fonte em memória).
+  late final SessaoApi? _sessaoApi = Ambiente.criarSessao();
+
+  /// `null` = visitante anônimo vendo a vitrine.
+  Sessao? _sessao;
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +43,35 @@ class _QuartoDeMilhaAppState extends State<QuartoDeMilhaApp> {
       widget.fonte ?? Ambiente.criarFonte(),
       analytics: _analytics,
     );
+    _repositorio.carregar();
+
+    // Quem já entrou continua entrado ao reabrir: o cookie `HttpOnly` sobrevive
+    // ao recarregar. Em paralelo, para a vitrine não esperar a resposta.
+    if (_sessaoApi != null) _restaurarSessao();
+  }
+
+  /// Recupera a sessão existente; descarta cookie vencido ou revogado.
+  Future<void> _restaurarSessao() async {
+    final sessao = await _sessaoApi!.atual();
+    if (!mounted || sessao == null) return;
+    setState(() => _sessao = sessao);
+    // Com sessão, a API devolve o acervo completo (manejo incluído).
+    _repositorio.carregar();
+  }
+
+  /// Entrou: recarrega para receber os dados privados das baias.
+  void _aposEntrar(Sessao sessao) {
+    setState(() => _sessao = sessao);
+    _analytics.registrar('acesso_proprietario', propriedades: {'papel': sessao.papel});
+    _repositorio.carregar();
+  }
+
+  /// Saiu: volta ao acervo público.
+  Future<void> _sair() async {
+    await _sessaoApi?.sair();
+    if (!mounted) return;
+    setState(() => _sessao = null);
+    _analytics.registrar('saida_proprietario');
     _repositorio.carregar();
   }
 
@@ -68,6 +104,11 @@ class _QuartoDeMilhaAppState extends State<QuartoDeMilhaApp> {
       builder: (context, child) {
         return EscopoUi(
           paleta: paletaDoApp,
+          child: SessaoEscopo(
+          sessao: _sessao,
+          sessaoApi: _sessaoApi,
+          entrar: _aposEntrar,
+          sair: _sair,
           child: RepositorioEscopo(
           repositorio: _repositorio,
           child: VisualizadorEscopo(
@@ -114,6 +155,7 @@ class _QuartoDeMilhaAppState extends State<QuartoDeMilhaApp> {
                 );
               },
             ),
+          ),
           ),
           ),
         );

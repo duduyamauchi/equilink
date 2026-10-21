@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  quarto_core:
+    path: ../quarto_core
 
 dev_dependencies:
   flutter_test:
