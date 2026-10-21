@@ -247,6 +247,12 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
               ),
             ),
 
+            // A página atual aparece sempre: é o que dá contexto à sugestão,
+            // mesmo quando não há backend para gravá-la.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: _PaginaAtual(pagina: pagina),
+            ),
             if (api == null)
               const Padding(
                 padding: EdgeInsets.all(16),
@@ -260,8 +266,7 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   children: [
-                    _PaginaAtual(pagina: pagina),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 0),
                     _Formulario(
                       titulo: _titulo,
                       texto: _texto,
@@ -314,12 +319,33 @@ class _PainelSugestoesState extends State<PainelSugestoes> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    if (!_carregando && _sugestoes.isEmpty)
+                    // "Vazio" e "não carregou" são estados diferentes: dizer
+                    // "nenhuma sugestão" depois de um erro faz o cliente achar
+                    // que perdeu o que escreveu.
+                    if (!_carregando && _sugestoes.isEmpty && _erro == null)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 20),
                         child: Text(
                           'Nenhuma sugestão nesta página ainda.',
                           style: TextStyle(fontSize: 12, color: AdminCores.textoSecundario),
+                        ),
+                      ),
+                    if (!_carregando && _sugestoes.isEmpty && _erro != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Não foi possível carregar suas sugestões.',
+                                style: TextStyle(fontSize: 12, color: AdminCores.textoSecundario),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _carregar,
+                              child: const Text('Tentar de novo'),
+                            ),
+                          ],
                         ),
                       ),
                     for (final s in _sugestoes)

@@ -952,7 +952,9 @@ export default {
         if (!autenticado) {
           return erro('Autenticação necessária.', 401, { cabecalhos: base });
         }
-        return rotaSugestoes({ request, url, sql, acesso, base, partes, identidade });
+        // `await` é obrigatório: sem ele a promise escapa do try/catch e uma
+        // validação recusada vira erro 500 (unhandled rejection) em vez de 400.
+        return await rotaSugestoes({ request, url, sql, acesso, base, partes, identidade });
       }
 
       // /cavalos/:id
@@ -1329,6 +1331,11 @@ async function rotaSugestoes({ request, url, sql, acesso, base, partes, identida
   if (!partes[1] && request.method === 'GET') {
     const rota = url.searchParams.get('rota');
     const incluirApagadas = url.searchParams.get('apagadas') === '1';
+    const limite = inteiro(url.searchParams.get('limite'), 'limite', {
+      min: 1,
+      max: 500,
+      padrao: 200,
+    });
     const linhas = await sql`
       select * from sugestoes
       where haras_id = ${acesso.harasId}
@@ -1336,7 +1343,7 @@ async function rotaSugestoes({ request, url, sql, acesso, base, partes, identida
         ${rota ? sql`and rota = ${rota}` : sql``}
         ${incluirApagadas ? sql`` : sql`and apagada_em is null`}
       order by atualizado_em desc
-      limit 500
+      limit ${limite}
     `;
     return responder({ sugestoes: linhas.map(paraSugestao) });
   }
@@ -1372,6 +1379,19 @@ async function rotaSugestoes({ request, url, sql, acesso, base, partes, identida
     `;
     const atual = existentes[0];
     if (!atual) return erro('Sugestão não encontrada.', 404, { cabecalhos: base });
+
+    // Sugestão apagada é só leitura. Sem esta guarda, `PUT` e `PATCH`
+    // reescreviam o conteúdo de algo que o cliente já tinha removido da lista.
+    //
+    // `DELETE` continua aceito: apagar duas vezes é idempotente e devolve 204.
+    if (atual.apagada_em) {
+      const permitido =
+        (partes[2] === 'historico' && request.method === 'GET') ||
+        request.method === 'DELETE';
+      if (!permitido) {
+        return erro('Sugestão apagada não pode ser alterada.', 409, { cabecalhos: base });
+      }
+    }
 
     // GET /sugestoes/:id/historico
     if (partes[2] === 'historico' && request.method === 'GET') {
