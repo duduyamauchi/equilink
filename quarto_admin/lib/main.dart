@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quarto_core/quarto_core.dart';
 
 import 'core/analytics_painel.dart';
+import 'telas/login.dart';
 import 'core/escopo.dart';
 import 'core/tema.dart';
 import 'package:quarto_ui/quarto_ui.dart';
@@ -33,6 +34,16 @@ class _PainelAppState extends State<PainelApp> {
   late final ColetorAnaliticoPainel _analytics;
   late final _roteador = criarRoteadorAdmin();
 
+  /// Cliente de sessão; `null` quando a fonte é memória (testes/demonstração).
+  late final SessaoApi? _sessaoApi = Ambiente.criarSessao();
+
+  /// Sessão resolvida. `null` = ninguém autenticado.
+  Sessao? _sessao;
+
+  /// Motivo exibido na tela de login (ex.: sessão expirada).
+  String? _motivoLogin;
+
+
   @override
   void initState() {
     super.initState();
@@ -46,7 +57,56 @@ class _PainelAppState extends State<PainelApp> {
         usuario: 'painel',
       ),
     );
+    // Sem backend (memória) o painel abre direto — é o modo demonstração.
+    if (_sessaoApi == null) {
+      _repositorio.carregar();
+      return;
+    }
+    _restaurarSessao();
+  }
+
+  /// Recupera a sessão existente ao abrir o painel.
+  ///
+  /// O cookie `HttpOnly` sobrevive ao recarregar a página, então quem já entrou
+  /// não deve ver o formulário de novo. Perguntar ao servidor também descarta
+  /// cookie vencido, revogado ou forjado.
+  Future<void> _restaurarSessao() async {
+    final sessao = await _sessaoApi!.atual();
+    if (!mounted) return;
+    if (sessao == null) {
+      // Sem sessão: mostra o login sem carregar acervo (que viria público).
+      setState(() => _sessao = null);
+      return;
+    }
+    setState(() => _sessao = sessao);
     _repositorio.carregar();
+  }
+
+  /// Chamado quando a FonteHttp recebe 401: a sessão morreu no servidor.
+  void _sessaoExpirou() {
+    if (!mounted || _sessao == null) return;
+    setState(() {
+      _sessao = null;
+      _motivoLogin = 'Sua sessão expirou. Entre de novo.';
+    });
+  }
+
+  /// Recarrega o acervo depois do login.
+  void _aposEntrar(Sessao sessao) {
+    setState(() {
+      _sessao = sessao;
+      _motivoLogin = null;
+    });
+    _repositorio.carregar();
+  }
+
+  Future<void> _sair() async {
+    await _sessaoApi?.sair();
+    if (!mounted) return;
+    setState(() {
+      _sessao = null;
+      _motivoLogin = 'Sessão encerrada.';
+    });
   }
 
   @override
@@ -75,6 +135,12 @@ class _PainelAppState extends State<PainelApp> {
               listenable: _repositorio,
               builder: (context, _) => _Portao(
                 rep: _repositorio,
+                sessaoApi: _sessaoApi,
+                sessao: _sessao,
+                motivoLogin: _motivoLogin,
+                aoEntrar: _aposEntrar,
+                aoSair: _sair,
+                aoExpirar: _sessaoExpirou,
                 child: child ?? const SizedBox.shrink(),
               ),
             ),
@@ -88,17 +154,48 @@ class _PainelAppState extends State<PainelApp> {
 
 /// Só libera o painel quando o acervo está disponível.
 class _Portao extends StatelessWidget {
-  const _Portao({required this.rep, required this.child});
+  const _Portao({
+    required this.rep,
+    required this.child,
+    this.sessaoApi,
+    this.sessao,
+    this.motivoLogin,
+    this.aoEntrar,
+    this.aoSair,
+    this.aoExpirar,
+  });
 
   final Repositorio rep;
   final Widget child;
 
+  /// Quando há backend, o painel só abre com sessão.
+  final SessaoApi? sessaoApi;
+  final Sessao? sessao;
+  final String? motivoLogin;
+  final ValueChanged<Sessao>? aoEntrar;
+  final Future<void> Function()? aoSair;
+  final VoidCallback? aoExpirar;
+
   @override
   Widget build(BuildContext context) {
+    // Com backend: sem sessão não há painel, nem no modo de erro.
+    if (sessaoApi != null && sessao == null) {
+      return TelaLogin(
+        sessaoApi: sessaoApi!,
+        aoEntrar: aoEntrar ?? (_) {},
+        motivo: motivoLogin,
+      );
+    }
+
     switch (rep.estado) {
       case EstadoCarga.pronto:
-        return child;
+        return _ComSessao(sessao: sessao, aoSair: aoSair, child: child);
       case EstadoCarga.erro:
+        // Sessão morta no servidor: volta ao login em vez de mostrar erro.
+        if (rep.erro != null && rep.erro!.contains('Sessão') && aoExpirar != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => aoExpirar!());
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
         return Scaffold(
           body: Center(
             child: ConstrainedBox(
@@ -184,4 +281,50 @@ class _ColetorDoPainel implements ColetorAnalytics {
   }
   @override
   Future<void> encerrar() async {}
+}
+
+
+/// Moldura mínima que mostra quem está conectado e permite sair.
+class _ComSessao extends StatelessWidget {
+  const _ComSessao({required this.child, this.sessao, this.aoSair});
+
+  final Widget child;
+  final Sessao? sessao;
+  final Future<void> Function()? aoSair;
+
+  @override
+  Widget build(BuildContext context) {
+    if (sessao == null || aoSair == null) return child;
+    return Stack(
+      children: [
+        child,
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: Material(
+            color: AdminCores.barra,
+            borderRadius: BorderRadius.circular(AdminRaios.total),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AdminRaios.total),
+              onTap: aoSair,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.person_outline, size: 15, color: Colors.white70),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${sessao!.usuario} · ${sessao!.papelRotulo} · sair',
+                      style: const TextStyle(fontSize: 11.5, color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
