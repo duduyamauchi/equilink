@@ -6,9 +6,11 @@ então trocar mock por banco de dados é trocar uma implementação.
 
 ```
 horse-igor/
-├── pacotes/quarto_core/     modelos, contrato de fonte e fachada (sem UI)
-├── quarto_de_milha/         aplicativo do usuário (web, Android, iOS)
-└── quarto_admin/            painel administrativo (web)
+├── pacotes/quarto_core/     modelos, contrato de fonte, sessão e fachada (sem UI)
+├── quarto_de_milha/         aplicativo do usuário + proxy /api (web, Android, iOS)
+├── quarto_admin/            painel administrativo + proxy /api (web)
+├── workers/api/             API sobre o Neon (auth, validação, autorização)
+└── deploy/                  schema.sql e migração de segurança
 ```
 
 ## Como os dados fluem
@@ -21,17 +23,27 @@ flowchart LR
   end
   R["Repositorio<br/>(fachada + estado)"]
   F{{"FonteDeDados"}}
-  M["FonteMemoria<br/>(hoje)"]
-  H["FonteHttp<br/>(backend futuro)"]
-  D[("API REST<br/>GET/PUT /acervo")]
+  M["FonteMemoria<br/>(demonstração e testes)"]
+  H["FonteHttp"]
+  P["Proxy /api<br/>(mesma origem)"]
+  D["quarto-api<br/>(Worker)"]
+  N[("Postgres<br/>Neon")]
 
   U --> R
   A --> R
   R --> F
   F --> M
   F --> H
-  H --> D
+  H --> P
+  P --> D
+  D --> N
 ```
+
+O proxy de mesma origem não é decoração: o cookie de sessão é `SameSite=Strict`,
+e o navegador **não o envia** quando o app e a API estão em hosts diferentes.
+Chamar a API direto funcionava para leitura pública e silenciosamente devolvia o
+acervo sem os dados privados — o sintoma era o painel mostrar `0 de 0 pendentes`
+depois de um login bem-sucedido.
 
 O `Repositorio` aplica a alteração na hora (resposta imediata na tela) e depois
 persiste na fonte. Se a gravação falhar, `rep.erro` é preenchido e o painel mostra
@@ -146,6 +158,27 @@ cd quarto_de_milha && flutter run -d chrome
 ```
 
 Para builds locais servidos por HTTP, use `ferramentas/servir.py` na raiz.
+
+## Segurança
+
+O modelo, em uma frase: **leitura pública, escrita autenticada, dado privado
+atrás de sessão**.
+
+| Camada | Decisão |
+| --- | --- |
+| Senha | PBKDF2-HMAC-SHA256, 100 mil iterações (teto do runtime da Cloudflare) sobre `HMAC(senha, pepper)`. Sem o pepper, um dump do banco não permite ataque offline |
+| Sessão | Cookie `HttpOnly` + `Secure` + `SameSite=Strict`, assinado com HMAC-SHA256 (`SESSION_SECRET`), validade de 8 h |
+| CSRF | `SameSite=Strict` + JSON obrigatório + `Origin` conferida |
+| XSS | Cookie invisível a scripts; CSP sem `unsafe-eval`; saída em JSON |
+| Autorização | Papel lido de `usuario_haras` a cada requisição (`leitor`/`operador`/`proprietario`) |
+| Força bruta | 5 falhas por IP e por usuário em 15 min; IP guardado como hash |
+| Entrada | Corpo ≤1 MiB, listas ≤500 itens, textos truncados, datas/intervalos/números validados, URL só `http(s)` ou `assets/` |
+| Erro | Mensagem do banco nunca vai para o cliente; log com `x-erro-id` |
+| Cabeçalhos | HSTS, CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: no-referrer`, `Permissions-Policy` em `web/_headers` |
+| CORS | Allowlist exata de origens, sem curinga, com credenciais |
+
+Privacidade: o visitante anônimo recebe a vitrine (fotos, genealogia, histórico)
+sem telefone do proprietário e sem manejo, ocorrências ou observações das baias.
 
 ## Analytics
 
