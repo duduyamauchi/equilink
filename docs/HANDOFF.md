@@ -32,9 +32,9 @@ curl -X POST -H "Authorization: Bearer $TOKEN" -H 'Accept: application/vnd.githu
   -d '{"new_owner":"EdYuTo"}' https://api.github.com/repos/duduyamauchi/equilink-infra/transfer
 ```
 
-Depois do aceite, o Eduardo continua como colaborador **admin** nos dois
-repositórios (o GitHub re-adiciona o dono anterior); o Edson pode removê-lo
-quando quiser encerrar o acesso.
+Depois do aceite, o GitHub re-adiciona o dono anterior como colaborador do
+repositório transferido; o Edson pode remover o Eduardo em Settings →
+Collaborators quando quiser encerrar o acesso.
 
 ---
 
