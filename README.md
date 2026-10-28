@@ -14,6 +14,7 @@ português do Brasil. Três projetos, um núcleo compartilhado.
 - **Entender a arquitetura, plugar um banco e usar o analytics:** [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md)
 - **Rodar tudo localmente:** `python ferramentas/servir.py`
 - **Testar:** `flutter test` dentro de cada projeto
+- **Assumir o projeto (novo responsável):** [`docs/HANDOFF.md`](docs/HANDOFF.md)
 
 ## Estado atual
 

@@ -9,7 +9,7 @@ criado de novo.
 
 | Serviço | Estado |
 | --- | --- |
-| **GitHub** (`duduyamauchi`) | conta ativa; repositório `equilink` (branch `main`); GitHub Pages desativado |
+| **GitHub** (`EdYuTo`) | conta ativa; repositório `equilink` (branch `main`); GitHub Pages desativado. Transferência de `duduyamauchi` registrada em [`HANDOFF.md`](HANDOFF.md) |
 | Token de API do GitHub | existe, mas **deve ser revogado e recriado** (ver §5) |
 
 ---
